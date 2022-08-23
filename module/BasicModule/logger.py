@@ -7,5 +7,5 @@ logs = os.path.join('logs')
 if not os.path.exists(logs):
     os.makedirs(logs)
 # 创建日志
-log = logger.add(f"./logs/output_{datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')}.log",
-                 format="[{time:MM-DD HH:mm:ss}] - {level}: {message}", rotation="00:00")
+nowTime = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')
+log = logger.add(f"./logs/output_{nowTime}.log", format="[{time:MM-DD HH:mm:ss}] - {level}: {message}", rotation="00:00")

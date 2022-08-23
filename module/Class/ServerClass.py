@@ -1,110 +1,133 @@
-from module.Class.ExceptionClass import IncomingParametersError, CommandNotFoundError, ConnectServerError
-from module.BasicModule.logger import logger
+from module.BasicModule.Logger import logger
 from rcon.source import rcon
 
 class MinecraftServer:
-    __Command: dict
-    ServerName: str
-    __Host: str
-    __Port: int
-    __Password: str
 
-    def __init__(self, ServerName: str, RconConfig: dict, Command: dict) -> None:
-        if isinstance(ServerName, str) and isinstance(RconConfig, dict) and isinstance(Command, dict):
-            self.ServerName = ServerName
-            self.__Command = Command
-            self.__Host = RconConfig["RconHost"]
-            self.__Port = RconConfig["RconPort"]
-            self.__Password = RconConfig["RconPassword"]
-        else:
-            raise IncomingParametersError()
+    """
+    服务器类
+    """
 
-    async def TestConnection(self) -> None:
-        logger.debug(f"正在测试到服务器{self.ServerName}的连接")
+    __RconPort = 0
+    __RconHost = ""
+    __RconPasswd = ""
+    __ServerName = ""
+    WhitelistAddCommandPrefix = ""
+    WhitelistDelCommandPrefix = ""
+
+    def __init__(self, Port: int, Host: str, Passwd: str, Name: str, whitelistAdd: str = "whitelist add",
+                 whitelistDel: str = "whitelist remove") -> None:
+
+        """
+        构造函数\n
+        :param Port: Rcon端口(int)
+        :param Host: Rcon主机(str)
+        :param Passwd: Rcon密码(str)
+        :param Name: 服务器名称(str)
+        :param whitelistAdd: 添加白名单命令前缀(str)
+        :param whitelistDel: 移除白名单命令前缀(str)
+        :return: None
+        """
+
+        self.__RconPort = Port
+        self.__ServerName = Name
+        self.__RconPasswd = Passwd
+        self.__RconHost = Host
+        self.WhitelistAddCommandPrefix = whitelistAdd
+        self.WhitelistDelCommandPrefix = whitelistDel
+
+    def ChangeInfo(self, Port: int, Host: str, Passwd: str, Name: str) -> None:
+
+        """
+        修改服务器信息\n
+        :param Port: Rcon端口(int)
+        :param Host: Rcon主机(str)
+        :param Passwd: Rcon密码(str)
+        :param Name: 服务器名称(str)
+        :return: None
+        """
+
+        self.__RconPort = Port
+        self.__ServerName = Name
+        self.__RconPasswd = Passwd
+        self.__RconHost = Host
+
+    def GetServerInfo(self) -> dict:
+
+        """
+        获取服务器信息\n
+        :return: {"ServerName": str,"RconPort": int,"RconHost": str,"RconPasswd": str,"whitelist":{"Add":str,"Del":str}}
+        """
+
+        return {
+            "ServerName": self.__ServerName,
+            "RconPort": self.__RconPort,
+            "RconHost": self.__RconHost,
+            "RconPasswd": self.__RconPasswd,
+            "whitelist": {
+                "Add": self.WhitelistAddCommandPrefix,
+                "Del": self.WhitelistDelCommandPrefix
+            }
+        }
+
+    def GetServerName(self) -> str:
+
+        """
+        获取服务器名称\n
+        :return: str
+        """
+
+        return self.__ServerName
+
+    async def ServerRunCommand(self, Command: str) -> str:
+        """
+            服务器执行指定命令\n
+            :param Command: 要运行的命令（str）
+            :return: str
+            """
+
         try:
-            if await rcon("list", host=self.__Host, port=self.__Port, passwd=self.__Password):
-                logger.success(f"成功连接到服务器{self.ServerName}")
+            logger.debug(f"[RCON]:[{self.__ServerName}]执行命令：{Command}")
+            output = await rcon(
+                Command,
+                host=self.__RconHost,
+                port=self.__RconPort,
+                passwd=self.__RconPasswd
+            )
+            return output
         except:
-            logger.error(f"连接到{self.ServerName}时出错")
-            raise ConnectServerError(f"连接到服务器{self.ServerName}出错")
+            logger.error("[RCON]发生错误,请检查配置是否出错")
 
-    async def ServerRunCommand(self, command: str) -> str:
-        logger.debug(f"服务器{self.ServerName}执行命令: {command}")
-        try:
-            respond = await rcon(command, host=self.__Host, port=self.__Port, passwd=self.__Password)
-            logger.success(f"命令执行成功")
-            return respond
-        except:
-            logger.error(f"服务器{self.ServerName}执行命令出错")
+    async def WhitelistAdd(self, player: str) -> bool:
 
-    async def AddWhitelist(self, PlayerName: str) -> bool:
-        if "Whitelist" in self.__Command.keys():
-            if "Add" in self.__Command["Whitelist"].keys():
-                logger.debug(f"服务器{self.ServerName}添加白名单{PlayerName}")
-                try:
-                    respond = await self.ServerRunCommand(self.__Command["Whitelist"]["Add"].format(player=PlayerName))
-                    if "Added" in respond or "already" in respond:
-                        logger.success(f"服务器{self.ServerName}添加白名单成功")
-                        return True
-                    else:
-                        logger.error(f"服务器{self.ServerName}添加白名单失败")
-                except:
-                    logger.error(f"{self.ServerName}: 执行命令时出错")
-            else:
-                raise CommandNotFoundError("没有在Whitelist配置里面找到Add命令")
-        else:
-            raise CommandNotFoundError("没有找到Whitelist配置")
+        """
+        为指定玩家添加白名单\n
+        :param player: 玩家名（str）
+        :return: True(成功授予) False(已有白名单)
+        """
 
-    async def DelWhitelist(self, PlayerName: str) -> bool:
-        if "Whitelist" in self.__Command.keys():
-            if "Del" in self.__Command["Whitelist"].keys():
-                logger.debug(f"服务器{self.ServerName}移除白名单{PlayerName}")
-                try:
-                    respond = await self.ServerRunCommand(self.__Command["Whitelist"]["Del"].format(player=PlayerName))
-                    if "Removed" in respond or "not" in respond:
-                        logger.success(f"服务器{self.ServerName}移除白名单成功")
-                        return True
-                    else:
-                        logger.error(f"服务器{self.ServerName}移除白名单出现未知错误")
-                except:
-                    logger.error(f"{self.ServerName}: 执行命令时出错")
-            else:
-                raise CommandNotFoundError("没有在Whitelist配置里面找到Del命令")
-        else:
-            raise CommandNotFoundError("没有找到Whitelist配置")
+        output = await self.ServerRunCommand(self.WhitelistAddCommandPrefix + " " + player)
+        if "Player is already whitelisted" in output:
+            return False
+        elif "Added" in output:
+            logger.info(f"成功给予{player}白名单")
+            return True
 
-    async def AddBan(self, PlayerName: str, reason: str = None) -> bool:
-        if "Ban" in self.__Command.keys():
-            if "Add" in self.__Command["Ban"].keys():
-                logger.debug(f"服务器{self.ServerName}封禁玩家{PlayerName}")
-                try:
-                    respond = await self.ServerRunCommand(self.__Command["Ban"]["Add"].format(player=PlayerName, reason=reason))
-                    if "Banned" in respond or "banned" in respond:
-                        logger.success(f"服务器{self.ServerName}封禁玩家成功")
-                        return True
-                    else:
-                        logger.error(f"服务器{self.ServerName}封禁玩家发生错误")
-                except:
-                    logger.error(f"{self.ServerName}: 执行命令出错")
-            else:
-                raise CommandNotFoundError("没有在Ban配置里面找到Add命令")
-        else:
-            raise CommandNotFoundError("没有找到Ban配置")
+    async def WhitelistDel(self, player: str) -> bool:
 
-    async def DelBan(self, PlayerName: str) -> bool:
-        if "Ban" in self.__Command.keys():
-            if "Del" in self.__Command["Ban"].keys():
-                logger.debug(f"服务器{self.ServerName}解封玩家{PlayerName}")
-                try:
-                    respond = await self.ServerRunCommand(self.__Command["Ban"]["Del"].format(player=PlayerName))
-                    if "Unbanned" in respond or "isn't" in respond:
-                        logger.success(f"服务器{self.ServerName}解封玩家成功")
-                        return True
-                    else:
-                        logger.error(f"服务器{self.ServerName}解封玩家发生错误")
-                except:
-                    logger.error(f"{self.ServerName}: 执行命令出错")
-            else:
-                raise CommandNotFoundError("没有在Ban配置里面找到Del命令")
-        else:
-            raise CommandNotFoundError("没有找到Ban配置")
+        """
+        移除白名单\n
+        :param player: 玩家名（str）
+        :return: True(成功移除) False(未有白名单)
+        """
+
+        output = await self.ServerRunCommand(self.WhitelistDelCommandPrefix + " " + player)
+        if "Player is not whitelisted" in output:
+            logger.info("该玩家未拥有白名单")
+            return False
+        elif "Removed" in output:
+            logger.info(f"已成功移除{player}白名单")
+            return True
+
+    def __del__(self):
+        del self.__RconPort, self.__RconHost, self.__RconPasswd, self.__ServerName, self.WhitelistAddCommandPrefix, \
+            self.WhitelistDelCommandPrefix

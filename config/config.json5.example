@@ -1,33 +1,28 @@
 {
-	ConfigVersion: 1.0,
-	DataBaseConfig: {
-		Host: "127.0.0.1",
-		Password: "123456",
-		Username: "root",
-		DatabaseName: "database"
-	},
-	MiraiBotConfig: {
-		QQ: 123456789,
-		ConnectType: "WebSocket",
-		WebSocketPort: 8000,
-		GroupConfig: {
-			AdminGroup: 123456789,
-			PlayerGroup: 123456789,
-		},
-		MiraiHTTP:{
-			Host: "127.0.0.1",
-			Key: "123456",
-			Port: 8080,
-			SyncId: "-1",
-			SingleMode: false
-		}
-	},
-	WebsocketConfig: {
-		enable: true,
-		host: "ws://localhost",
-		port: 3000
-	},
-	ServerList: {
-		"server": "localhost:25565"
-	}
+  "key": "1234",
+  "DataBase":{
+    "host": "192.168.1.5",
+    "username": "root",
+    "password": "123",
+    "database": "whitelist"
+  },
+  "channel": {
+    "player": "6021862032038221",
+    "admin": "8376825314099360"
+  },
+  "RCON": {
+    "host": "192.168.1.2",
+    "password": "123141",
+    "port": 1337,
+    "name": "原版服"
+  },
+  "Command": {
+    "WhitelistAdd": "easywhitelist add",
+    "WhitelistDel": "easywhitelist remove"
+  },
+  WebsocketConfig: {
+    enable: true,
+    host: "ws://localhost",
+    port: 3000
+  }
 }
