@@ -1,0 +1,28 @@
+{
+  "key": "1234",
+  "DataBase":{
+    "host": "192.168.1.5",
+    "username": "root",
+    "password": "123",
+    "database": "whitelist"
+  },
+  "channel": {
+    "player": "6021862032038221",
+    "admin": "8376825314099360"
+  },
+  "RCON": {
+    "host": "192.168.1.2",
+    "password": "123141",
+    "port": 1337,
+    "name": "原版服"
+  },
+  "Command": {
+    "WhitelistAdd": "easywhitelist add",
+    "WhitelistDel": "easywhitelist remove"
+  },
+  WebsocketConfig: {
+    enable: true,
+    host: "ws://localhost",
+    port: 3000
+  }
+}
