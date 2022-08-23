@@ -127,3 +127,21 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/test.py
+/config/config.json5
+/config/FAQ.json5
+/config/image.json5
+/logs/
+/image/
+/.idea/.gitignore
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/Pigeon-Server-QQBot-V2.iml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/vcs.xml
+/config/server.json5
+/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
+/config/word.json5
+/config/except.json5
+/recv.py
+/config/interflow.json5
