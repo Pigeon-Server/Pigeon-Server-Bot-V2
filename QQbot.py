@@ -4,14 +4,14 @@ from mirai.models.events import GroupMessage
 from mirai_extensions.trigger import Filter
 from module.BasicModule.config import config
 from module.Interlining.Bot import bot, control, message
-from module.BasicModule.sqlrelated import cursor, connected, database
+from module.BasicModule.sqlrelated import cursor, database
 from module.BasicModule.logger import logger
 from module.Interlining.UsefulTools import IsAdminGroup, IsPlayerGroup, FindAnswer, Segmentation, PingDataBase, IsAtBot
 from module.Interlining.Objectification import whitelist, server, blacklist, query
 from asyncio.tasks import sleep
 from random import uniform
-from websockets.legacy.client import connect
-from module.Interlining.WebSocket import websocket
+# from websockets.legacy.client import connect
+# from module.Interlining.WebSocket import websocket
 
 @bot.on(Startup)
 async def Startup(event: Startup):
@@ -21,13 +21,13 @@ async def Startup(event: Startup):
 async def Shutdown(event: Shutdown):
     database.Disconnect()
 
-@bot.add_background_task()
-async def Websocket():
-    while True:
-        async for msg in await connect(websocket.hostname):
-            data = eval(msg)
-            if data["type"] == "QQ":
-                print(data["message"])
+# @bot.add_background_task()
+# async def Websocket():
+#     while True:
+#         async for msg in await connect(websocket.hostname):
+#             data = eval(msg)
+#             if data["type"] == "QQ":
+#                 print(data["message"])
 
 @bot.on(GroupMessage)
 async def MessageRecord(event: GroupMessage):

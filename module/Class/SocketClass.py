@@ -32,4 +32,3 @@ class SocketClass:
         except Exception as error:
             logger.error(error)
             logger.error("发生未知错误")
-

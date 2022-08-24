@@ -5,7 +5,7 @@ from mirai_extensions.trigger import Filter
 from module.BasicModule.logger import logger
 from module.Interlining.UsefulTools import IsAtBot, IsAdminGroup, IsPlayerGroup
 from mirai.models.message import Plain
-from module.Interlining.Server import MinecraftServer
+from module.Class.ServerClass import MinecraftServer
 from module.Interlining.UsefulTools import PingDataBase, JudgeToken, Segmentation
 
 class WhitelistClass:

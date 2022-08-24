@@ -1,7 +1,5 @@
-from base64 import b64encode
 from json5.lib import load, dumps
 from pathlib import Path
-from asyncio.runners import run
 from module.BasicModule.logger import logger
 from sys import exit
 
@@ -10,7 +8,6 @@ class ConfigClass:
 
     Config: dict
     FAQ: dict
-    image: dict
     server: dict
     word: dict
     exception: list
@@ -51,13 +48,6 @@ class ConfigClass:
         except:
             logger.error("屏蔽名单加载失败")
             exit()
-        logger.debug("正在加载图片文件")
-        try:
-            self.image = run(self.loadImage())
-            logger.success("图片加载完成")
-        except:
-            logger.error("图片加载失败")
-            exit()
         logger.success("所有配置文件加载完毕")
 
     async def reloadConfig(self) -> dict:
@@ -68,21 +58,13 @@ class ConfigClass:
             logger.debug("正在重载违禁词和排除名单")
             self.word = self.loadConfig("word.json5")
             logger.success("违禁词和排除名单重载完成")
-            logger.debug("正在重载图片文件")
-            self.image = await self.loadImage()
-            logger.success("图片重载完成")
+            logger.debug("正在重载屏蔽名单")
+            self.exception = self.loadConfig("except.json5")
+            logger.success("屏蔽名单重载完成")
             return True
         except:
             logger.error("重载配置文件发生错误")
             return False
-
-    async def loadImage(self) -> dict:
-        pathConfig = self.loadConfig("image.json5")
-        tempDict = {}
-        for raw in pathConfig:
-            with open(pathConfig[raw], 'rb') as i:
-                tempDict.update({raw: str(b64encode(i.read()), 'utf-8')})
-        return tempDict
 
     async def WriteException(self, id: int) -> bool:
         if id in self.exception:
