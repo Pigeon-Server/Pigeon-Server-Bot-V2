@@ -145,3 +145,7 @@ dmypy.json
 /config/except.json5
 /recv.py
 /config/interflow.json5
+/.idea/KOOKBot.iml
+/.idea/Pigeon-Server-Bot-V2.iml
+/.idea/inspectionProfiles/Project_Default.xml
+/README.md

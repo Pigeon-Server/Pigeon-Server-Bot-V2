@@ -8,9 +8,21 @@ class BlackListClass:
     __MinecraftServer: MinecraftServer
 
     def __init__(self, server: MinecraftServer) -> None:
+
+        """
+        构造函数\n
+        """
+
         self.__MinecraftServer = server
 
     async def AddBlackList(self, playerName: str, reason: str = "None") -> None:
+
+        """
+        添加黑名单\n
+        :param playerName: 玩家名（必填)
+        :param reason: 封禁理由,默认为None
+        """
+
         PingDataBase()
         if cursor.execute(f"select * from wait where PlayerName = '{playerName}'"):
             try:
@@ -28,6 +40,12 @@ class BlackListClass:
             await message.AdminMessage("该玩家不存在，请确认玩家名")
 
     async def DelBlackList(self, playerName: str) -> None:
+
+        """
+        移除黑名单\n
+        :param playerName: 玩家名
+        """
+
         PingDataBase()
         if cursor.execute(f"select * from wait where PlayerName = '{playerName}'"):
             try:
@@ -41,4 +59,3 @@ class BlackListClass:
                 await message.AdminMessage("移除黑名单失败")
         else:
             await message.AdminMessage("该玩家不存在，请确认玩家名")
-
