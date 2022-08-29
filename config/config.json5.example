@@ -1,5 +1,19 @@
 {
 	ConfigVersion: 1.0,
+	infolimit: 15,
+	CosConfig: {
+		ConnectConfig: {
+			SecretId: "123",
+			SecretKey: "123",
+			Region: "ap-123",
+			Token: "",
+			SSL: true
+		},
+		Bucket: "test-123",
+		Path: "test",
+		enableAgent: false,
+		agentAddress: {}
+	},
 	DataBaseConfig: {
 		Host: "127.0.0.1",
 		Password: "123456",
