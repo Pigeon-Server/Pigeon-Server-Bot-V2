@@ -51,18 +51,20 @@ def FindAnswer(event: GroupMessage) -> str | None:
     """
 
     message: str = str(event.message_chain)  # 将消息转换成消息链
-    if event.group.id in config.FAQ.keys():  # 如果群号在字典内出现
+    respond: str = None
+
+    if str(event.group.id) in config.FAQ.keys():  # 如果群号在字典内出现
         answer: dict = config.FAQ[str(event.group.id)]  # 提取该群的回答
         for raw in answer:  # 循环关键字
-            if raw in answer:  # 如果匹配
-                return answer[raw]  # 返回结果
-        return None  # 无匹配结果返回None
-    else:  # 群号没有在字典内出现
+            if raw in message:  # 如果匹配
+                respond = answer[raw]  # 返回结果
+    if respond is None:
         Global: dict = config.FAQ["global"]  # 提取出全局问答
         for raw in Global:  # 循环关键字
             if raw in message:  # 如果匹配
                 return Global[raw]  # 返回结果
-        return None  # 无匹配结果返回None
+    else:
+        return None
 
 async def Segmentation(send, message: str) -> None:
 
