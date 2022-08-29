@@ -1,4 +1,4 @@
-from module.BasicModule.sqlrelated import cursor
+from module.BasicModule.SqlRelate import cursor
 
 class QueryClass:
     @staticmethod

@@ -1,5 +1,5 @@
 from module.Class.ExceptionClass import IncomingParametersError, CommandNotFoundError, ConnectServerError
-from module.BasicModule.logger import logger
+from module.BasicModule.Logger import logger
 from rcon.source import rcon
 
 class MinecraftServer:
@@ -44,10 +44,10 @@ class MinecraftServer:
                 try:
                     respond = await self.ServerRunCommand(self.__Command["Whitelist"]["Add"].format(player=PlayerName))
                     if "Added" in respond or "already" in respond:
-                        logger.success(f"服务器{self.ServerName}添加白名单成功")
+                        logger.success(f"服务器{self.ServerName}添加{PlayerName}白名单成功")
                         return True
                     else:
-                        logger.error(f"服务器{self.ServerName}添加白名单失败")
+                        logger.error(f"服务器{self.ServerName}添加{PlayerName}白名单失败")
                 except:
                     logger.error(f"{self.ServerName}: 执行命令时出错")
             else:
@@ -62,10 +62,10 @@ class MinecraftServer:
                 try:
                     respond = await self.ServerRunCommand(self.__Command["Whitelist"]["Del"].format(player=PlayerName))
                     if "Removed" in respond or "not" in respond:
-                        logger.success(f"服务器{self.ServerName}移除白名单成功")
+                        logger.success(f"服务器{self.ServerName}移除{PlayerName}白名单成功")
                         return True
                     else:
-                        logger.error(f"服务器{self.ServerName}移除白名单出现未知错误")
+                        logger.error(f"服务器{self.ServerName}移除{PlayerName}白名单出现未知错误")
                 except:
                     logger.error(f"{self.ServerName}: 执行命令时出错")
             else:
@@ -80,10 +80,10 @@ class MinecraftServer:
                 try:
                     respond = await self.ServerRunCommand(self.__Command["Ban"]["Add"].format(player=PlayerName, reason=reason))
                     if "Banned" in respond or "banned" in respond:
-                        logger.success(f"服务器{self.ServerName}封禁玩家成功")
+                        logger.success(f"服务器{self.ServerName}封禁{PlayerName}成功")
                         return True
                     else:
-                        logger.error(f"服务器{self.ServerName}封禁玩家发生错误")
+                        logger.error(f"服务器{self.ServerName}封禁{PlayerName}发生错误")
                 except:
                     logger.error(f"{self.ServerName}: 执行命令出错")
             else:
@@ -98,10 +98,10 @@ class MinecraftServer:
                 try:
                     respond = await self.ServerRunCommand(self.__Command["Ban"]["Del"].format(player=PlayerName))
                     if "Unbanned" in respond or "isn't" in respond:
-                        logger.success(f"服务器{self.ServerName}解封玩家成功")
+                        logger.success(f"服务器{self.ServerName}解封{PlayerName}成功")
                         return True
                     else:
-                        logger.error(f"服务器{self.ServerName}解封玩家发生错误")
+                        logger.error(f"服务器{self.ServerName}解封{PlayerName}发生错误")
                 except:
                     logger.error(f"{self.ServerName}: 执行命令出错")
             else:

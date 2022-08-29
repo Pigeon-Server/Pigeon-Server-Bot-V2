@@ -37,3 +37,8 @@ class WebsocketUrlError(CustomError):
     def __init__(self, info: str = "无效的连接地址"):
         super(WebsocketUrlError, self).__init__()
         self.info = info
+
+class NoKeyError(CustomError):
+    def __init__(self, info: str = "无法找到字典的键值"):
+        super(NoKeyError, self).__init__()
+        self.info = info

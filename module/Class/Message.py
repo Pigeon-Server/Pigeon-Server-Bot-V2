@@ -2,8 +2,8 @@ from mirai.bot import Mirai
 from asyncio.tasks import sleep
 from random import uniform
 from mirai.models.message import Plain, MessageChain, At
-from module.BasicModule.logger import logger
-from module.BasicModule.config import config
+from module.BasicModule.Logger import logger
+from module.BasicModule.Config import config
 from module.Interlining.UsefulTools import CheckSendType
 from sys import exit
 
@@ -12,13 +12,22 @@ class Message:
     __bot = None
     PlayerName: str
     AdminName: str
-    PlayerGroup: int = config.Config["MiraiBotConfig"]["GroupConfig"]["PlayerGroup"]
-    AdminGroup: int = config.Config["MiraiBotConfig"]["GroupConfig"]["AdminGroup"]
+    PlayerGroup: int
+    AdminGroup: int
 
     def __init__(self, botObj: Mirai) -> None:
+        """
+        构造函数\n
+        :param botObj: 传入bot实例
+        """
         self.__bot = botObj
+        self.PlayerGroup = config.Config["MiraiBotConfig"]["GroupConfig"]["AdminGroup"]
+        self.AdminGroup = config.Config["MiraiBotConfig"]["GroupConfig"]["PlayerGroup"]
 
     async def init(self) -> None:
+        """
+        消息模块初始化\n
+        """
         logger.debug("正在初始化消息模块")
         try:
             self.PlayerName = (await self.__bot.get_group(self.PlayerGroup)).name
@@ -28,8 +37,16 @@ class Message:
             logger.error("初始化消息模块失败")
             exit()
 
-    async def SendMessage(self, groupName: str, targetGroup: str, message: str, AtTarget: int = None, targetMessage: int = None) -> None:
-        logger.info(f"[消息]->群:{groupName}({targetGroup}):{message}")
+    async def SendMessage(self, targetGroup: str, message: str, AtTarget: int = None, targetMessage: int = None) -> None:
+        """
+        向任意群发送消息\n
+        Args:
+            targetGroup: 发送消息的目标群
+            message: 要发送的消息
+            AtTarget: @目标，可以为空
+            targetMessage: 回复目标，可以为空
+        """
+        logger.info(f"[消息]->群:{(await self.__bot.get_group(targetGroup)).name}({targetGroup}):{message}")
         await sleep(uniform(1.0, 0.3))
         match CheckSendType(AtTarget, targetMessage):
             case 0:
@@ -62,6 +79,13 @@ class Message:
                     logger.error("发送消息出现未知错误！")
 
     async def PlayerMessage(self, message: str, AtTarget: int = None, targetMessage: int = None) -> None:
+        """
+        向配置文件中定义的玩家群发送消息\n
+        Args:
+            message: 要发送的消息
+            AtTarget: @目标，可以为空
+            targetMessage: 回复目标，可以为空
+        """
         logger.info(f"[消息]->群:{self.PlayerName}({self.PlayerGroup}):{message}")
         await sleep(uniform(1.0, 0.3))
         match CheckSendType(AtTarget, targetMessage):
@@ -95,6 +119,13 @@ class Message:
                     logger.error("发送消息出现未知错误！")
 
     async def AdminMessage(self, message: str, AtTarget: int = None, targetMessage: int = None) -> None:
+        """
+        向配置文件中定义的管理群发送消息\n
+        Args:
+            message: 要发送的消息
+            AtTarget: @目标，可以为空
+            targetMessage: 回复目标，可以为空
+        """
         logger.info(f"[消息]->群:{self.AdminName}({self.AdminGroup}):{message}")
         await sleep(uniform(1.0, 0.3))
         match CheckSendType(AtTarget, targetMessage):

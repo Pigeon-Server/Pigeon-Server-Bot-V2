@@ -1,6 +1,6 @@
 from json5.lib import load, dumps
 from pathlib import Path
-from module.BasicModule.logger import logger
+from module.BasicModule.Logger import logger
 from sys import exit
 
 
@@ -9,8 +9,9 @@ class ConfigClass:
     Config: dict
     FAQ: dict
     server: dict
-    word: dict
+    word: list
     exception: list
+    module: dict
 
     def __init__(self):
         logger.debug("正在加载主配置文件")
@@ -20,34 +21,45 @@ class ConfigClass:
         except:
             logger.error("主配置文件加载失败")
             exit()
-        logger.debug("正在加载问答模块")
+        logger.debug("正在加载模块配置")
         try:
-            self.FAQ = self.loadConfig("FAQ.json5")
-            logger.success("问答模块加载完成")
+            self.module = self.loadConfig("module.json5")
+            logger.success("模块配置加载完成")
         except:
-            logger.error("加载问答模块失败")
+            logger.error("模块配置加载失败")
             exit()
-        logger.debug("正在加载服务器配置")
-        try:
-            self.server = self.loadConfig("server.json5")
-            logger.success("服务器配置加载完成")
-        except:
-            logger.error("加载服务器配置失败")
-            exit()
-        logger.debug("正在加载违禁词和排除名单")
-        try:
-            self.word = self.loadConfig("word.json5")
-            logger.success("违禁词和排除名单加载完成")
-        except:
-            logger.error("违禁词和排除名单加载失败")
-            exit()
-        logger.debug("正在加载屏蔽名单")
-        try:
-            self.exception = self.loadConfig("except.json5")
-            logger.success("屏蔽名单加载完成")
-        except:
-            logger.error("屏蔽名单加载失败")
-            exit()
+        if self.module["Questions"]:
+            logger.debug("正在加载问答模块")
+            try:
+                self.FAQ = self.loadConfig("FAQ.json5")
+                logger.success("问答模块加载完成")
+            except:
+                logger.error("加载问答模块失败")
+                exit()
+        if self.module["WhiteList"] or self.module["BlackList"]:
+            logger.debug("正在加载服务器配置")
+            try:
+                self.server = self.loadConfig("server.json5")
+                logger.success("服务器配置加载完成")
+            except:
+                logger.error("加载服务器配置失败")
+                exit()
+        if self.module["BlockWord"]:
+            logger.debug("正在加载违禁词和排除名单")
+            try:
+                self.word = self.loadConfig("word.json5")
+                logger.success("违禁词和排除名单加载完成")
+            except:
+                logger.error("违禁词和排除名单加载失败")
+                exit()
+        if self.module["Shutup"]:
+            logger.debug("正在加载屏蔽名单")
+            try:
+                self.exception = self.loadConfig("except.json5")
+                logger.success("屏蔽名单加载完成")
+            except:
+                logger.error("屏蔽名单加载失败")
+                exit()
         logger.success("所有配置文件加载完毕")
 
     async def reloadConfig(self) -> dict:

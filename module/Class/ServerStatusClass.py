@@ -1,6 +1,6 @@
 from mcstatus import JavaServer
 from module.Class.ExceptionClass import IncomingParametersError, NoParametersError
-from module.BasicModule.logger import logger
+from module.BasicModule.Logger import logger
 
 class ServerStatus:
     Server: dict

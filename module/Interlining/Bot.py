@@ -3,8 +3,8 @@ from mirai.bot import Mirai
 from mirai.adapters.websocket import WebSocketAdapter
 from mirai_extensions.trigger import HandlerControl, InterruptControl
 from mirai.adapters.http import HTTPAdapter
-from module.BasicModule.config import config
-from module.BasicModule.logger import logger
+from module.BasicModule.Config import config
+from module.BasicModule.Logger import logger
 from module.Class.Message import Message
 from module.Class.ExceptionClass import ConnectionTypeError
 

@@ -1,8 +1,8 @@
-from module.BasicModule.sqlrelated import cursor
+from module.BasicModule.SqlRelate import cursor
 from module.Interlining.Bot import message, interrupt
 from mirai.models.events import GroupMessage
 from mirai_extensions.trigger import Filter
-from module.BasicModule.logger import logger
+from module.BasicModule.Logger import logger
 from module.Interlining.UsefulTools import IsAtBot, IsAdminGroup, IsPlayerGroup
 from mirai.models.message import Plain
 from module.Class.ServerClass import MinecraftServer

@@ -1,6 +1,6 @@
 from module.Class.DataBaseClass import DataBase
-from module.BasicModule.config import config
-from module.BasicModule.logger import logger
+from module.BasicModule.Config import config
+from module.BasicModule.Logger import logger
 
 database = DataBase(config.Config["DataBaseConfig"]["DatabaseName"], config.Config["DataBaseConfig"]["Host"],
                     config.Config["DataBaseConfig"]["Username"], config.Config["DataBaseConfig"]["Password"])
@@ -63,5 +63,5 @@ if cursor.execute("show tables") < 4:
      PRIMARY KEY (`account`,`PlayerName`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3""")
 
-    logger.debug("数据表创建完成")
+    logger.success("数据表创建完成")
 
