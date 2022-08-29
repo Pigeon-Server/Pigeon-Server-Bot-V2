@@ -149,3 +149,5 @@ dmypy.json
 /.idea/Pigeon-Server-Bot-V2.iml
 /.idea/inspectionProfiles/Project_Default.xml
 /README.md
+/Images
+/Images/*

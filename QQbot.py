@@ -1,6 +1,7 @@
 from re import match as rematch
 from mirai.bot import Startup, Shutdown
 from mirai.models.events import GroupMessage
+from mirai.models.message import Image
 from mirai_extensions.trigger import Filter
 from module.BasicModule.config import config
 from module.Interlining.Bot import bot, control, message
@@ -8,6 +9,7 @@ from module.BasicModule.sqlrelated import cursor, database
 from module.BasicModule.logger import logger
 from module.Interlining.UsefulTools import IsAdminGroup, IsPlayerGroup, FindAnswer, Segmentation, PingDataBase, IsAtBot
 from module.Interlining.Objectification import whitelist, server, blacklist, query
+from module.BasicModule.filetools import download_files, Cos_Tools, Cos_success
 from asyncio.tasks import sleep
 from random import uniform
 # from websockets.legacy.client import connect
@@ -32,6 +34,15 @@ async def Shutdown(event: Shutdown):
 @bot.on(GroupMessage)
 async def MessageRecord(event: GroupMessage):
     logger.info(f"[消息]<-{event.group.name}({event.sender.group.id})-{event.sender.member_name}({event.sender.id}):{str(event.message_chain)}")
+
+@bot.on(GroupMessage)
+async def download_images(event: GroupMessage):
+    Cos_Config = config.Config["CosConfig"]
+    if event.message_chain.has(Image):
+        temp = []
+        for image in event.message_chain.get(Image):
+            temp.append(image.url)
+        await download_files(temp, "Images", "md5", lambda list: Cos_success if Cos_Tools.upload_files(list, Bucket=Cos_Config["Bucket"], path=Cos_Config["Path"], EnableMD5=True) else None)
 
 @Filter(GroupMessage)
 def CheckServerStatusSpy(event: GroupMessage):
@@ -106,7 +117,8 @@ async def BlockingWord(event: GroupMessage, recall: bool):
 
 @control.on(AnswerJudge)
 async def Answer(event: GroupMessage, respond: str):
-    if respond is not None:
+    if respond \
+            is not None:
         await message.SendMessage((await bot.get_group(event.group.id)).name, event.group.id, respond, targetMessage=event.message_chain.message_id)
 
 @control.on(PlayerGroupCommandParsing)
