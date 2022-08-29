@@ -1,4 +1,4 @@
-from module.BasicModule.sqlrelated import cursor
+from module.BasicModule.SqlRelate import cursor
 from module.Interlining.Bot import message
 from module.Class.ServerClass import MinecraftServer
 from module.Interlining.UsefulTools import PingDataBase

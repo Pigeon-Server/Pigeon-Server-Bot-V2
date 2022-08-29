@@ -1,5 +1,5 @@
 import pymysql
-from module.BasicModule.logger import logger
+from module.BasicModule.Logger import logger
 
 class DataBase:
 

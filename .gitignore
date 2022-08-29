@@ -151,3 +151,4 @@ dmypy.json
 /README.md
 /Images
 /Images/*
+/config/module.json5

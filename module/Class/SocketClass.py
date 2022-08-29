@@ -1,6 +1,6 @@
 from module.Class.ExceptionClass import WebsocketUrlError
 from websockets.legacy.client import connect
-from module.BasicModule.logger import logger
+from module.BasicModule.Logger import logger
 
 class SocketClass:
 

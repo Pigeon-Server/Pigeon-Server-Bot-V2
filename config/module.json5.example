@@ -1,0 +1,11 @@
+{
+  KookInterflow: false,
+  ImageReview: false,
+  BlackList: true,
+  Whitelist: true,
+  BlockWord: true,
+  Questions: true,
+  Shutup: true,
+  Online: true,
+  DebugMode: false
+}

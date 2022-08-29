@@ -1,10 +1,15 @@
-from module.BasicModule.config import config
-from module.BasicModule.sqlrelated import connected, cursor
+from module.BasicModule.Config import config
+from module.BasicModule.SqlRelate import connected, cursor
 from mirai.models.message import MessageChain, At
 from mirai.models.events import GroupMessage
+from requests import get
+from filetype import guess
+from hashlib import md5
+from module.BasicModule.Logger import logger
+from os.path import exists, join
+from typing import Union
 
 def IsAdminGroup(Group: str) -> bool:
-
     """
     判断所给出的是否是管理员群\n
     :param Group: 群号
@@ -13,8 +18,8 @@ def IsAdminGroup(Group: str) -> bool:
 
     return Group == config.Config["MiraiBotConfig"]["GroupConfig"]["AdminGroup"]
 
-def IsPlayerGroup(Group: str) -> bool:
 
+def IsPlayerGroup(Group: str) -> bool:
     """
     判断所给出的是否是玩家群\n
     :param Group: 群号
@@ -23,16 +28,16 @@ def IsPlayerGroup(Group: str) -> bool:
 
     return Group == config.Config["MiraiBotConfig"]["GroupConfig"]["PlayerGroup"]
 
-def PingDataBase() -> None:
 
+def PingDataBase() -> None:
     """
     ping数据库，并且自动重连\n
     """
 
     connected.ping(reconnect=True)
 
-def IsAtBot(chain: MessageChain) -> bool:
 
+def IsAtBot(chain: MessageChain) -> bool:
     """
     判断是否艾特了机器人\n
     :param chain: 消息链，传入要判断的消息链
@@ -42,15 +47,15 @@ def IsAtBot(chain: MessageChain) -> bool:
     if chain.has(At):
         return chain.get_first(At).target == config.Config["MiraiBotConfig"]["QQ"]
 
-def FindAnswer(event: GroupMessage) -> str | None:
 
+def FindAnswer(event: GroupMessage) -> Union[str, None]:
     """
     匹配关键词回复的答案\n
     :param event: 消息事件
     :return: 找到返回字符串，未找到返回None
     """
 
-    message: str = str(event.message_chain)  # 将消息转换成消息链
+    message: str = str(event.message_chain)  # 将消息链转换成文本
     respond: str = None
 
     if str(event.group.id) in config.FAQ.keys():  # 如果群号在字典内出现
@@ -58,13 +63,14 @@ def FindAnswer(event: GroupMessage) -> str | None:
         for raw in answer:  # 循环关键字
             if raw in message:  # 如果匹配
                 respond = answer[raw]  # 返回结果
-    if respond is None:
+    if respond is None:  # 如果第一层循环没有找到答案
         Global: dict = config.FAQ["global"]  # 提取出全局问答
         for raw in Global:  # 循环关键字
             if raw in message:  # 如果匹配
                 return Global[raw]  # 返回结果
     else:
-        return None
+        return None  # 两遍循环都没找到则返回None
+
 
 async def Segmentation(send, message: str) -> None:
 
@@ -92,7 +98,16 @@ async def Segmentation(send, message: str) -> None:
     else:
         await send(message.removesuffix("\n"))
 
-def CheckSendType(AtTarget, targetMessage) -> int:
+
+def CheckSendType(AtTarget: Union[int, None] = None, targetMessage: Union[int, None] = None) -> int:
+
+    """
+    判断应该使用的发送模式\n
+    :param AtTarget: @目标，可以为空
+    :param targetMessage: 回复目标，可以为空
+    :return: int 0:没有@没有回复 1:没有@有回复 2:有@没有回复 3:既有@也有回复
+    """
+
     if AtTarget is None and targetMessage is None:
         return 0
     elif AtTarget is None and targetMessage is not None:
@@ -102,7 +117,15 @@ def CheckSendType(AtTarget, targetMessage) -> int:
     elif AtTarget is not None and targetMessage is not None:
         return 3
 
+
 def JudgeToken(id: int) -> dict:
+
+    """
+    判断次Token是否能操作\n
+    :param id: 唯一id
+    :return: {"status":True/False,"info":具体消息}
+    """
+
     if cursor.execute(f"select * from wait where id = {id}"):
         data = cursor.fetchone()
         if data[16]:
@@ -133,3 +156,43 @@ def JudgeToken(id: int) -> dict:
             "status": False,
             "info": "未查询到玩家"
         }
+
+async def DownloadFile(urls: list, Path: str, FileName: Union[list, bool], callback=None) -> Union[list, None]:
+
+    """
+    从url下载文件\n
+    Args:
+        urls: 文件列表
+        Path: 保存的目录
+        FileName: 文件名
+        callback: 回调函数,可为空
+    """
+
+    SuccessList: list = []
+    for index, url in enumerate(urls, 0):
+        try:
+            fileio = get(url)
+        except:
+            logger.error("下载失败，URL：" + url)
+        else:
+            FileType = guess(fileio.content)  # 文件类型识别
+            if isinstance(FileName, bool) and FileName:
+                fileMd5 = md5(fileio.content).hexdigest()  # md5生成
+                if FileType:  # 文件名拼接
+                    fileName = join(Path, f"{fileMd5}.{FileType.extension}")
+                else:
+                    fileName = join(Path, fileMd5)
+                if not exists(fileName):
+                    SuccessList.append(fileName)
+                    open(fileName, "wb").write(fileio.content)
+                fileio.close()
+            else:
+                if FileType:  # 文件名拼接
+                    fileName = join(Path, f"{FileName[index]}.{FileType.extension}")
+                else:
+                    fileName = join(Path, FileName[index])
+                if not exists(fileName):
+                    SuccessList.append(fileName)
+                    open(fileName, "wb").write(fileio.content)
+                fileio.close()
+    return SuccessList if callback is None else callback(SuccessList)
