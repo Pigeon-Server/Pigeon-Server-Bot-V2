@@ -1,9 +1,11 @@
 from module.BasicModule.Logger import logger
 from qcloud_cos import CosConfig, CosS3Client
 from qcloud_cos.cos_exception import CosClientError, CosServiceError
+from qcloud_cos.cos_comm import CiDetectType
 from module.Class.ExceptionClass import IncomingParametersError, NoKeyError
 from os.path import exists, split, join
 from typing import Union
+
 
 class CosClass:  # Cos属于付费接口，尽量少调用
     __ConnectConfig = None
@@ -12,7 +14,8 @@ class CosClass:  # Cos属于付费接口，尽量少调用
     __Path: str
     connected: bool = False
 
-    def __init__(self, SecretId: str, SecretKey: str, region: str, Bucket: str, Path: str, token: Union[str, None] = None,
+    def __init__(self, SecretId: str, SecretKey: str, region: str, Bucket: str, Path: str,
+                 token: Union[str, None] = None,
                  SSL: bool = True, proxies: bool = False, agentAddress: dict = None) -> None:
 
         """
@@ -129,13 +132,13 @@ class CosClass:  # Cos属于付费接口，尽量少调用
         SuccessList: list = []
         for file in files:
             respond = self.__client.delete_object(
-                    Bucket=Bucket,
-                    Key=file
-                ) if VersionId is None else self.__client.delete_object(
-                    Bucket=Bucket,
-                    Key=file,
-                    VersionId=VersionId
-                )
+                Bucket=Bucket,
+                Key=file
+            ) if VersionId is None else self.__client.delete_object(
+                Bucket=Bucket,
+                Key=file,
+                VersionId=VersionId
+            )
             if respond.get("x-cos-delete-marker"):
                 SuccessList.append(file)
                 if VersionId is True:
@@ -146,4 +149,66 @@ class CosClass:  # Cos属于付费接口，尽量少调用
                 logger.debug(f"删除{file}失败")
         return SuccessList
 
+    def Get_File_URL(self, file, Bucket=None):
 
+        """
+        获取存储桶中文件访问URL
+        Args:
+            file:文件名
+            Bucket:使用的储存桶，不传入时使用构造时传入的储存桶
+        """
+
+        Bucket = self.__Bucket if Bucket is None else Bucket
+        if self.__client.object_exists(Bucket, Key=file):
+            return self.__client.get_object_url(Bucket, Key=file)
+        else:
+            return False
+
+    def Files_Content_Recognition(self, Files: list, BizType: str, Interval=3, MaxFrames=5, Bucket=None, Compression=False):
+        """
+        :param Bucket: 存储桶
+        :param Files: 文件名列表，如果文件名为URL将无需填写存储桶
+        :param BizType: 审核策略的唯一标识，由后台自动生成，在控制台中对应为 Biztype 值。
+        :param Interval: 审核 GIF 动图时，可使用该参数进行截帧配置，代表截帧的间隔。例如值设为5，则表示从第1帧开始截取，每隔5帧截取一帧，默认值3。
+        :param MaxFrames: 针对 GIF 动图审核的最大截帧数量，需大于0。例如值设为5，则表示最大截取5帧，默认值为5。
+        :param Compression: 对于超过大小限制的图片是否进行压缩后再审核，取值为： False（不压缩），True（压缩）。默认为0。注：压缩最大支持32MB的图片，且会收取图片压缩费用。对于 GIF 等动态图过大时，压缩时间较长，可能会导致审核超时失败。
+        :return:
+        file_name:{
+            response:response
+        }
+        """
+        Bucket = self.__Bucket if Bucket is None else Bucket
+        Compression = 1 if Compression else 0
+        response = {}
+        for file_name in Files:
+            try:
+                if file_name[:4] in "http":
+                    Temp_response = self.__client.get_object_sensitive_content_recognition(
+                        Bucket=Bucket,
+                        Key=None,
+                        DetectUrl=file_name,
+                        BizType=BizType,
+                        Interval=Interval,
+                        MaxFrames=MaxFrames,
+                        LargeImageDetect=Compression
+                    )
+                    response[file_name] = Temp_response
+                else:
+                    file_name = f"{self.__Path}/{file_name}"
+                    if self.__client.object_exists(Bucket, Key=file_name):
+                        Temp_response = self.__client.get_object_sensitive_content_recognition(
+                            Bucket=Bucket,
+                            Key=file_name,
+                            BizType=BizType,
+                            Interval=Interval,
+                            MaxFrames=MaxFrames,
+                            LargeImageDetect=Compression
+                        )
+                        response[file_name] = Temp_response
+                    else:
+                        logger.error(f"文件{file_name}不存在")
+            except:
+                response.update(file_name)
+                response[file_name] = False
+                logger.error(f"{file_name}审核失败")
+        return response
