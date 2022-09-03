@@ -19,7 +19,7 @@ if ModuleConfig.CheckMCUpdate:
     @bot.add_background_task()
     async def CheckUpdateTask():
         while True:
-            await sleep(300)
+            await sleep(MainConfig.UpdateCheckInterval)
             await CheckUpdate()
 
 

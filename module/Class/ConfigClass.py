@@ -85,6 +85,7 @@ class ConfigInit:
     WebsocketConfig: WebsocketConfig
     ServerList: object
     AutomaticReview: AutomaticReview
+    UpdateCheckInterval: int
 
     def __init__(self, json):
         self.__dict__ = json

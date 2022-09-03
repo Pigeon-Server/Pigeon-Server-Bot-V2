@@ -60,16 +60,19 @@ class JsonDataBaseCLass:
         if DataType(self.__DataType) == DataType.DICT and target is None:
             raise NoKeyError("未指定修改的键值")
         elif DataType(self.__DataType) == DataType.DICT and target is not None:
-            tempData = self.Data[target]
-            if isinstance(tempData, list):
-                self.Data[target].remove(data) if delData else self.Data[target].append(data)
-            elif isinstance(tempData, str) or isinstance(tempData, int) or isinstance(tempData, float):
+            if target not in self.Data.keys():
                 self.Data[target] = data
-            elif isinstance(tempData, dict):
-                if isinstance(data, dict):
+            else:
+                tempData = self.Data[target]
+                if isinstance(tempData, list):
+                    self.Data[target].remove(data) if delData else self.Data[target].append(data)
+                elif isinstance(tempData, str) or isinstance(tempData, int) or isinstance(tempData, float):
                     self.Data[target] = data
-                else:
-                    raise RuntimeError("不支持此类修改")
+                elif isinstance(tempData, dict):
+                    if isinstance(data, dict):
+                        self.Data[target] = data
+                    else:
+                        raise RuntimeError("不支持此类修改")
         if DataType(self.__DataType) == DataType.DICT:
             try:
                 with open(f"data/{self.__DataBaseName}", 'w', encoding="UTF-8") as file:
