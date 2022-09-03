@@ -1,9 +1,10 @@
 from mirai.bot import Mirai
 from asyncio.tasks import sleep
 from random import uniform
+from mirai.models.events import GroupMessage
 from mirai.models.message import Plain, MessageChain, At
 from module.BasicModule.Logger import logger
-from module.BasicModule.Config import config
+from module.BasicModule.Config import MainConfig
 from module.Interlining.UsefulTools import CheckSendType
 from sys import exit
 
@@ -21,8 +22,8 @@ class Message:
         :param botObj: 传入bot实例
         """
         self.__bot = botObj
-        self.PlayerGroup = config.Config["MiraiBotConfig"]["GroupConfig"]["AdminGroup"]
-        self.AdminGroup = config.Config["MiraiBotConfig"]["GroupConfig"]["PlayerGroup"]
+        self.PlayerGroup = MainConfig.MiraiBotConfig.GroupConfig.PlayerGroup
+        self.AdminGroup = MainConfig.MiraiBotConfig.GroupConfig.AdminGroup
 
     async def init(self) -> None:
         """
@@ -36,6 +37,21 @@ class Message:
         except:
             logger.error("初始化消息模块失败")
             exit()
+
+    async def ImageCheckAndRecall(self, event: GroupMessage, sendMessage: str) -> None:
+        if sendMessage is not None and event.sender.permission == "MEMBER":
+            await self.__bot.mute(event.group.id, event.sender.id, 600)
+            await self.Recall(event.message_chain.message_id)
+            await self.SendMessage(event.group.id, sendMessage)
+
+    async def Recall(self, targetMessage: int) -> None:
+        """
+        撤回消息\n
+        Args:
+            targetMessage: 要撤回的目标消息
+        """
+        await sleep(uniform(1.0, 0.3))
+        await self.__bot.recall(targetMessage)
 
     async def SendMessage(self, targetGroup: str, message: str, AtTarget: int = None, targetMessage: int = None) -> None:
         """

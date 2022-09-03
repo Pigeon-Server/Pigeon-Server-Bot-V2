@@ -1,9 +1,9 @@
 from module.Class.SocketClass import SocketClass
-from module.BasicModule.Config import config
+from module.BasicModule.Config import ModuleConfig, MainConfig
 from asyncio.runners import run
 
-if config.module["KookInterflow"]:  # 是否启用websocket上报
+if ModuleConfig.KookInterflow:  # 是否启用websocket上报
     # 创建websocket客户端实例
-    websocket = SocketClass(config.Config["WebsocketConfig"]["host"], config.Config["WebsocketConfig"]["port"])
+    websocket = SocketClass(MainConfig.WebsocketConfig.host, MainConfig.WebsocketConfig.port)
     # 测试连接
     run(websocket.Connect())

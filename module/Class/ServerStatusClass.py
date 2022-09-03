@@ -36,7 +36,7 @@ class ServerStatus:
                 outputMessage += "\n"
                 self.outputMessage += outputMessage
                 del serverStatus, outputMessage
-            except IOError as error:
+            except Exception as error:
                 logger.error(serverName)
                 logger.error(error)
                 self.outputMessage += serverName + "(0): 服务器连接失败\n"
