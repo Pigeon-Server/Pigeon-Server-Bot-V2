@@ -16,6 +16,7 @@ if ModuleConfig.CheckMCUpdate:
     from module.Interlining.CheckUpdate import CheckUpdate
     from asyncio import sleep
 
+
     @bot.add_background_task()
     async def CheckUpdateTask():
         while True:
@@ -25,17 +26,23 @@ if ModuleConfig.CheckMCUpdate:
 
 # 是否启用Kook互通（未完成）
 if ModuleConfig.KookInterflow:
-    from websockets.legacy.client import connect  # 导入connect方法
     from module.Interlining.WebSocket import websocket  # 导入ws类实例
 
 
     @bot.add_background_task()  # 添加背景任务
     async def Websocket():
+        await websocket.Connect()
         while True:  # 重复运行
-            async for msg in await connect(websocket.hostname):
-                data = eval(msg)  # 获取消息并编码成字典
-                if data["type"] == "QQ":
-                    print(data["message"])
+            async for msg in websocket.connection:
+                data = eval(msg)
+                if data['type'] == "OnlineBroadcast":
+                    websocket.clientInfo[data['uuid']] = data['name']
+                elif data['type'] == "OfflineBroadcast":
+                    del websocket.clientInfo[data['uuid']]
+
+    @bot.on(Shutdown)
+    async def DisConnection(event: Shutdown):
+        await websocket.DisConnection()
 
 # 是否启用图片审查（未完成）
 if ModuleConfig.ImageReview:

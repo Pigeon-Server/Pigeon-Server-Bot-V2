@@ -14,11 +14,6 @@ if ModuleConfig.WhiteList or ModuleConfig.BlackList:
         run(vanillaServer.TestConnection())
     except:
         exit()
-    try:
-        testServer = MinecraftServer(ServerConfig.TestServer.ServerName, vars(ServerConfig.TestServer.RconConfig), vars(ServerConfig.TestServer.Command))
-        run(testServer.TestConnection())
-    except:
-        exit()
 if ModuleConfig.WhiteList:
     whitelist = WhitelistClass(vanillaServer)
 if ModuleConfig.BlackList:

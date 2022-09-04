@@ -106,31 +106,18 @@ class Ban:
 class Bot:
     Del: str
 
-class Op:
-    Add: str
-    Del: str
-
 class VanillaCommand:
     Whitelist: Whitelist
     Ban: Ban
     Bot: Bot
-
-class TestCommand:
-    Op: Op
 
 class VanillaServer:
     ServerName: str
     RconConfig: RconConfig
     Command: VanillaCommand
 
-class TestServer:
-    ServerName: str
-    RconConfig: RconConfig
-    Command: TestCommand
-
 class ServerConfigInit:
     VanillaServer: VanillaServer
-    TestServer: TestServer
 
     def __init__(self, json):
         self.__dict__ = json

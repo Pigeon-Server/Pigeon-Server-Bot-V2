@@ -66,6 +66,8 @@ def FindAnswer(event: GroupMessage) -> Union[str, None]:
             if raw in message:  # 如果匹配
                 respond = answer[raw]  # 返回结果
     if respond is None:  # 如果第一层循环没有找到答案
+        if event.group.id == MainConfig.MiraiBotConfig.GroupConfig.AdminGroup:
+            return None
         Global: dict = FAQConfig["global"]  # 提取出全局问答
         for raw in Global:  # 循环关键字
             if raw in message:  # 如果匹配
