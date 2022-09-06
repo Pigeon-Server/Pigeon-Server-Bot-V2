@@ -2,11 +2,13 @@ from mirai.bot import Mirai
 from asyncio.tasks import sleep
 from random import uniform
 from mirai.models.events import GroupMessage
-from mirai.models.message import Plain, MessageChain, At
+from mirai.models.message import Plain, MessageChain, At, Image
 from module.BasicModule.Logger import logger
 from module.BasicModule.Config import MainConfig
 from module.Interlining.UsefulTools import CheckSendType
 from sys import exit
+from typing import Union
+from base64 import b64encode
 
 class Message:
 
@@ -15,6 +17,7 @@ class Message:
     AdminName: str
     PlayerGroup: int
     AdminGroup: int
+    WelcomeMessage: dict
 
     def __init__(self, botObj: Mirai) -> None:
         """
@@ -33,10 +36,53 @@ class Message:
         try:
             self.PlayerName = (await self.__bot.get_group(self.PlayerGroup)).name
             self.AdminName = (await self.__bot.get_group(self.AdminGroup)).name
+            self.WelcomeMessage = self.MessageDecoding(MainConfig.WelcomeMessage)
+            for raw in self.WelcomeMessage:
+                if isinstance(raw, int):
+                    data = self.WelcomeMessage[raw]
+                    if data["type"] == "image":
+                        self.WelcomeMessage[raw]["target"] = b64encode(open(data["target"], "rb").read())
             logger.success("初始化消息模块成功")
         except:
             logger.error("初始化消息模块失败")
             exit()
+
+    async def SendWelcomeMessage(self, qq: int, name: str, groupId: int, groupName: str = None):
+        # try:
+            if groupName is None:
+                groupName = (await self.__bot.get_group(groupId)).name
+            data = self.WelcomeMessage
+            location = self.WelcomeMessage["location"]
+            messageList = []
+            for raw in location:
+                if isinstance(raw, int):
+                    tempData = data[raw]
+                    match tempData["type"]:
+                        case "variable":
+                            match tempData["target"]:
+                                case "qq":
+                                    messageList.append(Plain(qq))
+                                case "name":
+                                    messageList.append(Plain(name))
+                                case "groupId":
+                                    messageList.append(Plain(groupId))
+                                case "groupName":
+                                    messageList.append(Plain(groupName))
+                        case "at":
+                            if tempData["target"] == "qq":
+                                messageList.append(At(qq))
+                            else:
+                                messageList.append(At(int(tempData["target"])))
+                        case "image":
+                            messageList.append(Image(base64=tempData["target"]))
+                else:
+                    messageList.append(Plain(raw))
+            message = MessageChain(messageList)
+            logger.info(f"[消息]->群:{groupName}({groupId}):{str(message)}")
+            await sleep(uniform(1.0, 0.3))
+            await self.__bot.send_group_message(groupId, message)
+        # except:
+        #     logger.error("发送消息出现错误")
 
     async def ImageCheckAndRecall(self, event: GroupMessage, sendMessage: str) -> None:
         if sendMessage is not None and event.sender.permission == "MEMBER":
@@ -53,16 +99,17 @@ class Message:
         await sleep(uniform(1.0, 0.3))
         await self.__bot.recall(targetMessage)
 
-    async def SendMessage(self, targetGroup: str, message: str, AtTarget: int = None, targetMessage: int = None) -> None:
+    async def SendMessage(self, targetGroup: str, message: str, groupName: str = None, AtTarget: int = None, targetMessage: int = None) -> None:
         """
         向任意群发送消息\n
         Args:
             targetGroup: 发送消息的目标群
             message: 要发送的消息
+            groupName: 发送的群名称，可以为空
             AtTarget: @目标，可以为空
             targetMessage: 回复目标，可以为空
         """
-        logger.info(f"[消息]->群:{(await self.__bot.get_group(targetGroup)).name}({targetGroup}):{message}")
+        logger.info(f"[消息]->群:{(await self.__bot.get_group(targetGroup)).name if groupName is None else groupName}({targetGroup}):{message}")
         await sleep(uniform(1.0, 0.3))
         match CheckSendType(AtTarget, targetMessage):
             case 0:
@@ -173,3 +220,36 @@ class Message:
                     ]), targetMessage)
                 except:
                     logger.error("发送消息出现未知错误！")
+
+    def WelcomeMessage(self):
+        print(1)
+
+    @staticmethod
+    def MessageDecoding(data: str) -> Union[str, dict]:
+        """
+        对格式化字符串进行解析\n
+        Args:
+            data: 要解析的字符串
+        Returns:
+            str: 如果data不是一个格式化字符串格式，则直接返回原字符串。如果data内有格式化内容，则返回字典{"location":[],1 :{},2:{} ...}
+        """
+        output: list = []  # 定义结构列表
+        result: dict = {}  # 定义映射字典
+        count: int = 1  # 定义计数器
+        if data.find("{") == -1 or data.find("}") == -1:  # 如果找不到"{"或者"}"则直接返回原字符串
+            return data
+        while data.find("{") != -1 and data.find("}") != -1:  # 同时包含"{"和"}"
+            tempData = data[data.find("{"):data.find("}") + 1]  # 切出大括号包含的内容
+            if tempData.find(":") == -1:  # 判断格式
+                raise ValueError("消息占位符格式错误!")
+            output.append(data[:data.find("{")])  # 推入{前内容
+            result[count] = {
+                "type": tempData[1:tempData.find(":")],
+                "target": tempData[tempData.find(":") + 1:-1]
+            }  # 写入映射表
+            output.append(count)  # 推入映射Key
+            count += 1  # 计数器递增
+            data = data[data.find("}") + 1:]  # 切分字符串
+        result["location"] = output
+        return result
+

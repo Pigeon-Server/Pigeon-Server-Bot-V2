@@ -28,8 +28,8 @@ class ServerStatus:
                 self.playerMax += serverStatus.players.max
                 self.playerOnline += serverStatus.players.online
                 outputMessage = serverName + f"({serverStatus.players.online}): "
-                if len(serverStatus.players.sample) == 0:
-                    outputMessage += "服务器内无玩家"
+                if serverStatus.players.sample is None or len(serverStatus.players.sample) == 0:
+                    outputMessage += ""
                 else:
                     for player in serverStatus.players.sample:
                         outputMessage += f"[{player.name}] "

@@ -43,6 +43,7 @@ class DataBaseConfig:
     Password: str
     Username: str
     DatabaseName: str
+    Port: int
 
 class GroupConfig:
     AdminGroup: int
@@ -86,6 +87,7 @@ class ConfigInit:
     ServerList: object
     AutomaticReview: AutomaticReview
     UpdateCheckInterval: int
+    WelcomeMessage: str
 
     def __init__(self, json):
         self.__dict__ = json

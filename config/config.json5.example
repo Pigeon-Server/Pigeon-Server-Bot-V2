@@ -1,47 +1,70 @@
 {
 	ConfigVersion: 1.0,
-	infolimit: 15,
+	infoLimit: 15,
+	UpdateCheckInterval: 600,
+	// 格式化字符串，当前支持列表
+	// {variable:xxxx} 替换为某变量，具体列表在下方列出
+	// {at:123456789} 艾特某人
+	// 如果要艾特进群玩家请直接使用 {at:qq}
+	// {image:image\\a.png} 插入图片
+	// 变量支持列表
+	// qq 入群玩家qq号，可以用来艾特
+	// name 入群玩家名称
+	// groupId 入群群号
+	// groupName 入群的群名称
+	// 请勿使用双层大括号，比如{image:{variable:xxxx}}!
+	WelcomeMessage: "{at:qq}, 欢迎加入{variable:groupName}",
 	CosConfig: {
 		ConnectConfig: {
 			SecretId: "123",
 			SecretKey: "123",
-			Region: "ap-123",
+			Region: "ap-guangzhou",
 			Token: "",
 			SSL: true
 		},
-		Bucket: "test-123",
-		Path: "test",
+		BizType: "123",
+		Bucket: "123",
+		Path: "123",
 		enableAgent: false,
 		agentAddress: {}
 	},
 	DataBaseConfig: {
 		Host: "127.0.0.1",
-		Password: "123456",
+		Password: "1231",
 		Username: "root",
-		DatabaseName: "database"
+		DatabaseName: "test",
+		Port: 3306
 	},
 	MiraiBotConfig: {
-		QQ: 123456789,
+		QQ: 123123,
 		ConnectType: "WebSocket",
 		WebSocketPort: 8000,
 		GroupConfig: {
-			AdminGroup: 123456789,
-			PlayerGroup: 123456789,
+			AdminGroup: 123123,
+			PlayerGroup: 1241413,
 		},
 		MiraiHTTP:{
 			Host: "127.0.0.1",
-			Key: "123456",
+			Key: "12345",
 			Port: 8080,
 			SyncId: "-1",
 			SingleMode: false
 		}
 	},
 	WebsocketConfig: {
-		enable: true,
-		host: "ws://localhost",
+		host: "ws://127.0.0.1",
 		port: 3000
 	},
 	ServerList: {
-		"server": "localhost:25565"
+		"server": "127.0.0.1:25565",
+	},
+	AutomaticReview: {
+		level: 20,
+		age: {
+			min: 16,
+			max: 60
+		},
+		Refuse: false,
+		BlackList: false
 	}
 }

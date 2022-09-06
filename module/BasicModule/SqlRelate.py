@@ -3,7 +3,7 @@ from module.BasicModule.Config import MainConfig
 from module.BasicModule.Logger import logger
 
 database = DataBase(MainConfig.DataBaseConfig.DatabaseName, MainConfig.DataBaseConfig.Host,
-                    MainConfig.DataBaseConfig.Username, MainConfig.DataBaseConfig.Password)
+                    MainConfig.DataBaseConfig.Username, MainConfig.DataBaseConfig.Password, MainConfig.DataBaseConfig.Port)
 database.Connect()
 connected = database.GetConnectionInfo()
 cursor = connected.cursor()

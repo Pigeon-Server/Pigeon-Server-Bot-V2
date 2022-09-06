@@ -5,7 +5,7 @@ from mirai_extensions.trigger import Filter  # 导入过滤器模块
 from mirai.bot import Startup, Shutdown  # 导入机器人启动关闭事件
 from re import match as rematch  # 导入正则表达式并重命名（与match冲突）
 from mirai.models.message import Plain
-from mirai.models.events import GroupMessage, MemberJoinRequestEvent  # 导入群组消息模型
+from mirai.models.events import GroupMessage, MemberJoinRequestEvent, MemberJoinEvent  # 导入群组消息模型
 from module.BasicModule.SqlRelate import cursor, database  # 导入数据库事务和连接实例
 from module.BasicModule.Logger import logger  # 导入日志记录模块
 from module.Interlining.UsefulTools import IsAdminGroup, IsPlayerGroup, Segmentation, PingDataBase  # 判断是否是管理群或玩家群，消息切分，ping数据库
@@ -86,7 +86,7 @@ if ModuleConfig.Questions:
     @control.on(AnswerJudge)
     async def Answer(event: GroupMessage, respond: str):
         if respond is not None:
-            await message.SendMessage(event.group.id, respond, targetMessage=event.message_chain.message_id)
+            await message.SendMessage(event.group.id, respond, groupName=event.group.name, targetMessage=event.message_chain.message_id)
 # 是否允许玩家自主设置屏蔽
 if ModuleConfig.Shutup:
     from module.Interlining.UsefulTools import IsAtBot  # 判断是否艾特了机器人
@@ -104,10 +104,10 @@ if ModuleConfig.Shutup:
         if execute:
             if event.sender.id in ExceptList.Data:
                 ExceptList.EditData(event.sender.id, delData=True)
-                await message.SendMessage(event.group.id, "是否屏蔽:否")
+                await message.SendMessage(event.group.id, "是否屏蔽:否", groupName=event.group.name)
             else:
                 ExceptList.EditData(event.sender.id)
-                await message.SendMessage(event.group.id, "是否屏蔽:是")
+                await message.SendMessage(event.group.id, "是否屏蔽:是", groupName=event.group.name)
 
 # 是否开启在线人数查询
 if ModuleConfig.Online:
@@ -126,7 +126,7 @@ if ModuleConfig.Online:
     @control.on(CheckServerStatusSpy)
     async def CheckServer(event: GroupMessage, execute: bool):
         if execute:
-            await message.SendMessage(event.group.id, await server.GetOnlinePlayer())
+            await message.SendMessage(event.group.id, await server.GetOnlinePlayer(), groupName=event.group.name)
 
 # 是否开启触发关键词撤回
 if ModuleConfig.BlockWord:
@@ -144,7 +144,7 @@ if ModuleConfig.BlockWord:
     async def BlockingWord(event: GroupMessage, recall: bool):
         if recall:
             await message.Recall(event.message_chain.message_id)  # 撤回
-            await message.SendMessage(event.group.id, "触发违禁词，已撤回消息", event.sender.id)
+            await message.SendMessage(event.group.id, "触发违禁词，已撤回消息", event.sender.id, groupName=event.group.name)
 
 # 是否启用白名单模块
 if ModuleConfig.WhiteList:
@@ -235,6 +235,11 @@ async def Startup(event: Startup):
 @bot.on(Shutdown)
 async def Shutdown(event: Shutdown):
     database.Disconnect()  # 关闭前断开数据库连接
+
+
+@bot.on(MemberJoinEvent)
+async def WelcomeMessage(event: MemberJoinEvent):
+    await message.SendWelcomeMessage(event.member.id, event.member.member_name, event.member.group.id, event.member.group.name)
 
 
 @bot.on(GroupMessage)
