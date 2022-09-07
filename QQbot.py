@@ -144,7 +144,8 @@ if ModuleConfig.BlockWord:
     async def BlockingWord(event: GroupMessage, recall: bool):
         if recall:
             await message.Recall(event.message_chain.message_id)  # 撤回
-            await message.SendMessage(event.group.id, "触发违禁词，已撤回消息", event.sender.id, groupName=event.group.name)
+            await message.Mute(event.group.id, event.sender.id)
+            await message.SendMessage(event.group.id, "触发违禁词，已撤回消息", event.group.name, event.sender.id)
 
 # 是否启用白名单模块
 if ModuleConfig.WhiteList:

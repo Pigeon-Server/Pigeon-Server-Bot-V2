@@ -99,6 +99,17 @@ class Message:
         await sleep(uniform(1.0, 0.3))
         await self.__bot.recall(targetMessage)
 
+    async def Mute(self, groupId: int, id: int, time: int = 600) -> None:
+        """
+        禁言成员\n
+        Args:
+            groupId: 群号
+            id: 目标qq号
+            time: 禁言时间，默认600s
+        """
+        await sleep(uniform(1.0, 0.3))
+        await self.__bot.mute(target=groupId, member_id=id, time=time)
+
     async def SendMessage(self, targetGroup: str, message: str, groupName: str = None, AtTarget: int = None, targetMessage: int = None) -> None:
         """
         向任意群发送消息\n
