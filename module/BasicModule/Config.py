@@ -10,6 +10,8 @@ if not exists("config"):
     mkdir("config")
     logger.error("无法找到配置文件")
     exit()
+if not exists("data"):
+    mkdir("data")
 configTools = ConfigTools()
 logger.debug("开始加载配置文件")
 try:

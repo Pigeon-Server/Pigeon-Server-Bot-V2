@@ -154,3 +154,4 @@ dmypy.json
 /config/module.json5
 /Test.json5
 /test.pyi
+/requirements.txt

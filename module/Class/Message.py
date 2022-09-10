@@ -41,24 +41,32 @@ class Message:
                 if isinstance(raw, int):
                     data = self.WelcomeMessage[raw]
                     if data["type"] == "image":
-                        self.WelcomeMessage[raw]["target"] = b64encode(open(data["target"], "rb").read())
+                        self.WelcomeMessage[raw]["target"] = b64encode(open(data["target"], "rb").read())  # 提前用base64编码图片，减少后续发送耗时
             logger.success("初始化消息模块成功")
         except:
             logger.error("初始化消息模块失败")
             exit()
 
     async def SendWelcomeMessage(self, qq: int, name: str, groupId: int, groupName: str = None):
-        # try:
+        """
+        发送欢迎消息\n
+        Args:
+            qq: 入群人qq号
+            name: qq名
+            groupId: 群号
+            groupName: 群名
+        """
+        try:
             if groupName is None:
                 groupName = (await self.__bot.get_group(groupId)).name
-            data = self.WelcomeMessage
-            location = self.WelcomeMessage["location"]
-            messageList = []
+            data = self.WelcomeMessage  # 取出映射字典
+            location = self.WelcomeMessage["location"]  # 取出结构列表
+            messageList = []  # 定义输出列表
             for raw in location:
-                if isinstance(raw, int):
-                    tempData = data[raw]
-                    match tempData["type"]:
-                        case "variable":
+                if isinstance(raw, int):  # 如果是整数
+                    tempData = data[raw]  # 取出对应的类型
+                    match tempData["type"]:  # 判断类型
+                        case "variable":  # 如果为变量
                             match tempData["target"]:
                                 case "qq":
                                     messageList.append(Plain(qq))
@@ -68,27 +76,33 @@ class Message:
                                     messageList.append(Plain(groupId))
                                 case "groupName":
                                     messageList.append(Plain(groupName))
-                        case "at":
+                        case "at":  # 如果是at类型
                             if tempData["target"] == "qq":
                                 messageList.append(At(qq))
                             else:
                                 messageList.append(At(int(tempData["target"])))
-                        case "image":
+                        case "image":  # 如果是图片
                             messageList.append(Image(base64=tempData["target"]))
                 else:
                     messageList.append(Plain(raw))
-            message = MessageChain(messageList)
+            message = MessageChain(messageList)  # 构造消息链
             logger.info(f"[消息]->群:{groupName}({groupId}):{str(message)}")
             await sleep(uniform(1.0, 0.3))
             await self.__bot.send_group_message(groupId, message)
-        # except:
-        #     logger.error("发送消息出现错误")
+        except:
+            logger.error("发送消息出现错误")
 
-    async def ImageCheckAndRecall(self, event: GroupMessage, sendMessage: str) -> None:
+    async def RecallAndMute(self, event: GroupMessage, sendMessage: str) -> None:
+        """
+        撤回消息并禁言\n
+        Args:
+            event : 传入群消息事件
+            sendMessage: 要发送的消息
+        """
         if sendMessage is not None and event.sender.permission == "MEMBER":
-            await self.__bot.mute(event.group.id, event.sender.id, 600)
+            await self.Mute(event.group.id, event.sender.id)
             await self.Recall(event.message_chain.message_id)
-            await self.SendMessage(event.group.id, sendMessage)
+            await self.SendMessage(event.group.id, sendMessage, event.group.name, AtTarget=event.sender.id)
 
     async def Recall(self, targetMessage: int) -> None:
         """
@@ -231,9 +245,6 @@ class Message:
                     ]), targetMessage)
                 except:
                     logger.error("发送消息出现未知错误！")
-
-    def WelcomeMessage(self):
-        print(1)
 
     @staticmethod
     def MessageDecoding(data: str) -> Union[str, dict]:

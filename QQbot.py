@@ -24,8 +24,8 @@ if ModuleConfig.CheckMCUpdate:
             await CheckUpdate()
 
 
-# 是否启用Kook互通（未完成）
-if ModuleConfig.KookInterflow:
+# 是否启用WebSocket上报（未完成）
+if ModuleConfig.WebsocketReport:
     from module.Interlining.WebSocket import websocket  # 导入ws类实例
 
 
@@ -56,13 +56,13 @@ if ModuleConfig.ImageReview:
     async def ImageReview(event: GroupMessage):
         if event.message_chain.has(Image):  # 如果消息链里面有Image消息
             await DownloadFile(list(image.url for image in event.message_chain.get(Image)), "image", True,
-                               lambda recall: message.ImageCheckAndRecall(event, recall),
+                               lambda recall: message.RecallAndMute(event, recall),
                                lambda fileList: CosClient.UploadFile(fileList,
                                                                      EnableMD5=True) if CosClient.connected else None)
             if ImageList.Data["Wait"]:
                 await CosClient.FilesContentRecognition(ImageList.Data["Wait"], MainConfig.CosConfig.BizType,
-                                                        callback=lambda recall: message.ImageCheckAndRecall(event,
-                                                                                                            recall))
+                                                        callback=lambda recall: message.RecallAndMute(event,
+                                                                                                      recall))
 
 # 是否启用问答模块
 if ModuleConfig.Questions:
@@ -144,7 +144,7 @@ if ModuleConfig.BlockWord:
     async def BlockingWord(event: GroupMessage, recall: bool):
         if recall:
             await message.Recall(event.message_chain.message_id)  # 撤回
-            await message.Mute(event.group.id, event.sender.id)
+            await message.Mute(event.group.id, event.sender.id, 60)
             await message.SendMessage(event.group.id, "触发违禁词，已撤回消息", event.group.name, event.sender.id)
 
 # 是否启用白名单模块
@@ -156,12 +156,17 @@ if ModuleConfig.BlackList:
     from module.Interlining.Objectification import blacklist
 
 if ModuleConfig.AutomaticReview:
+    count: int = 1
+    processing: int = 1
+
     @bot.on(MemberJoinRequestEvent)
     async def ReviewJoin(event: MemberJoinRequestEvent):
         memberId = event.from_id
         groupId = event.group_id
         if groupId != MainConfig.MiraiBotConfig.GroupConfig.AdminGroup:
             memberInfo = await bot.user_profile(memberId)
+            global count, processing
+            temp = count
             if (MainConfig.AutomaticReview.age.min <= memberInfo.age <= MainConfig.AutomaticReview.age.max) and memberInfo.level >= MainConfig.AutomaticReview.level:
                 await bot.allow(event)
                 await message.AdminMessage(f"[{message.PlayerName if groupId == message.PlayerGroup else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
@@ -184,6 +189,7 @@ if ModuleConfig.AutomaticReview:
                 await bot.decline(event, "未达到入群要求", ban=MainConfig.AutomaticReview.BlackList)
             else:
                 await message.AdminMessage(f"[{message.PlayerName if groupId == message.PlayerGroup else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
+                                           f"ID: {count}\n"
                                            f"QQ名: {memberInfo.nickname}\n"
                                            f"QQ号: {memberId}\n"
                                            f"等级: {memberInfo.level}\n"
@@ -191,18 +197,19 @@ if ModuleConfig.AutomaticReview:
                                            f"入群信息：\n{event.message}\n"
                                            f"个性签名: {memberInfo.sign}\n"
                                            f"处理结果： 未满足入群条件，需人工审核(是/否/拉黑/忽略)")
+                count += 1
 
                 @Filter(GroupMessage)
                 def WaitCommit(msg: GroupMessage):
-                    if msg.message_chain.has(Plain) and IsAdminGroup(msg.group.id):
+                    if msg.message_chain.has(Plain) and IsAdminGroup(msg.group.id) and temp == processing:
                         res = msg.message_chain.get_first(Plain).text
-                        if "是" in res:
+                        if "是" == res:
                             return 1
-                        elif "否" in res:
+                        elif "否" == res:
                             return 2
-                        elif "拉黑" in res:
+                        elif "拉黑" == res:
                             return 3
-                        elif "忽略" in res:
+                        elif "忽略" == res:
                             return 4
 
                 match await interrupt.wait(WaitCommit):
@@ -218,6 +225,7 @@ if ModuleConfig.AutomaticReview:
                     case 4:
                         await message.AdminMessage("已忽略")
                         await bot.ignore(event)
+                processing += 1
 
 @bot.on(Startup)
 async def Startup(event: Startup):

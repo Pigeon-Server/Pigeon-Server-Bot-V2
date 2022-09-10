@@ -1,6 +1,7 @@
 from module.Class.ExceptionClass import WebsocketUrlError
 from websockets.legacy.client import connect
 from module.BasicModule.Logger import logger
+from sys import exit
 
 class SocketClass:
 
@@ -34,15 +35,19 @@ class SocketClass:
         except ConnectionRefusedError as error:
             logger.error(error)
             logger.error("连接被服务器拒绝")
+            exit()
         except ConnectionResetError as error:
             logger.error(error)
             logger.error("连接被重置")
+            exit()
         except ConnectionError as error:
             logger.error(error)
             logger.error("无法连接到websocket服务器")
+            exit()
         except Exception as error:
             logger.error(error)
             logger.error("发生未知错误")
+            exit()
 
     async def SendMessage(self, data: str, broadcast: bool = False, target: str = "") -> str:
         await self.connection.send(str({

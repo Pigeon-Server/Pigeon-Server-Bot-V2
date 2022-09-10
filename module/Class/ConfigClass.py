@@ -125,7 +125,7 @@ class ServerConfigInit:
         self.__dict__ = json
 
 class ModuleConfigInit:
-    KookInterflow: bool
+    WebsocketReport: bool
     ImageReview: bool
     BlackList: bool
     WhiteList: bool
