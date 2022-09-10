@@ -133,6 +133,8 @@ if ModuleConfig.BlockWord:
     @Filter(GroupMessage)
     def BlockingWordSpy(event: GroupMessage):
         msg: str = str(event.message_chain)
+        if IsAdminGroup(event.group.id):
+            return False
         if event.sender.permission.value == "MEMBER":  # 如果成员不是管理员或者群主
             for raw in BlockingWordList:  # 遍历屏蔽名单
                 if rematch(raw, msg) is not None:  # 如果有匹配返回true
@@ -163,13 +165,13 @@ if ModuleConfig.AutomaticReview:
     async def ReviewJoin(event: MemberJoinRequestEvent):
         memberId = event.from_id
         groupId = event.group_id
-        if groupId != MainConfig.MiraiBotConfig.GroupConfig.AdminGroup:
+        if not IsAdminGroup(groupId):
             memberInfo = await bot.user_profile(memberId)
             global count, processing
             temp = count
             if (MainConfig.AutomaticReview.age.min <= memberInfo.age <= MainConfig.AutomaticReview.age.max) and memberInfo.level >= MainConfig.AutomaticReview.level:
                 await bot.allow(event)
-                await message.AdminMessage(f"[{message.PlayerName if groupId == message.PlayerGroup else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
+                await message.AdminMessage(f"[{message.PlayerName if IsPlayerGroup(groupId) else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
                                            f"QQ名: {memberInfo.nickname}\n"
                                            f"QQ号: {memberId}\n"
                                            f"等级: {memberInfo.level}\n"
@@ -178,7 +180,7 @@ if ModuleConfig.AutomaticReview:
                                            f"个性签名: {memberInfo.sign}\n"
                                            f"处理结果： 满足入群条件，已同意")
             elif MainConfig.AutomaticReview.Refuse:
-                await message.AdminMessage(f"[{message.PlayerName if groupId == message.PlayerGroup else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
+                await message.AdminMessage(f"[{message.PlayerName if IsPlayerGroup(groupId) else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
                                            f"QQ名: {memberInfo.nickname}\n"
                                            f"QQ号: {memberId}\n"
                                            f"等级: {memberInfo.level}\n"
@@ -188,7 +190,7 @@ if ModuleConfig.AutomaticReview:
                                            f"处理结果： 未满足入群条件，已自动拒绝")
                 await bot.decline(event, "未达到入群要求", ban=MainConfig.AutomaticReview.BlackList)
             else:
-                await message.AdminMessage(f"[{message.PlayerName if groupId == message.PlayerGroup else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
+                await message.AdminMessage(f"[{message.PlayerName if IsPlayerGroup(groupId) else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
                                            f"ID: {count}\n"
                                            f"QQ名: {memberInfo.nickname}\n"
                                            f"QQ号: {memberId}\n"

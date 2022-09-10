@@ -138,9 +138,9 @@ class WhitelistClass:
                     def WaitCommitAdmin(msg: GroupMessage):
                         if msg.message_chain.has(Plain):
                             if IsAdminGroup(msg.group.id):
-                                if "是" in msg.message_chain.get_first(Plain).text:
+                                if "是" == msg.message_chain.get_first(Plain).text:
                                     return 1
-                                elif "否" in msg.message_chain.get_first(Plain).text:
+                                elif "否" == msg.message_chain.get_first(Plain).text:
                                     return 2
 
                     match await interrupt.wait(WaitCommitAdmin):
