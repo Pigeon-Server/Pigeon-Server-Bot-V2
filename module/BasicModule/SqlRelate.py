@@ -1,9 +1,9 @@
 from module.Class.DataBaseClass import DataBase
-from module.BasicModule.Config import config
+from module.BasicModule.Config import MainConfig
 from module.BasicModule.Logger import logger
 
-database = DataBase(config.Config["DataBaseConfig"]["DatabaseName"], config.Config["DataBaseConfig"]["Host"],
-                    config.Config["DataBaseConfig"]["Username"], config.Config["DataBaseConfig"]["Password"])
+database = DataBase(MainConfig.DataBaseConfig.DatabaseName, MainConfig.DataBaseConfig.Host,
+                    MainConfig.DataBaseConfig.Username, MainConfig.DataBaseConfig.Password, MainConfig.DataBaseConfig.Port)
 database.Connect()
 connected = database.GetConnectionInfo()
 cursor = connected.cursor()

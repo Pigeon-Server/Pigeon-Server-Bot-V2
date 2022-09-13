@@ -130,7 +130,7 @@ dmypy.json
 /test.py
 /config/config.json5
 /config/FAQ.json5
-/config/image.json5
+/data/image.json
 /logs/
 /image/
 /.idea/.gitignore
@@ -142,7 +142,7 @@ dmypy.json
 /config/server.json5
 /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
 /config/word.json5
-/config/except.json5
+/data/except.json
 /recv.py
 /config/interflow.json5
 /.idea/KOOKBot.iml
@@ -152,3 +152,6 @@ dmypy.json
 /Images
 /Images/*
 /config/module.json5
+/Test.json5
+/test.pyi
+/requirements.txt

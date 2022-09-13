@@ -28,15 +28,15 @@ class ServerStatus:
                 self.playerMax += serverStatus.players.max
                 self.playerOnline += serverStatus.players.online
                 outputMessage = serverName + f"({serverStatus.players.online}): "
-                if len(serverStatus.players.sample) == 0:
-                    outputMessage += "服务器内无玩家"
+                if serverStatus.players.sample is None or len(serverStatus.players.sample) == 0:
+                    outputMessage += ""
                 else:
                     for player in serverStatus.players.sample:
                         outputMessage += f"[{player.name}] "
                 outputMessage += "\n"
                 self.outputMessage += outputMessage
                 del serverStatus, outputMessage
-            except IOError as error:
+            except Exception as error:
                 logger.error(serverName)
                 logger.error(error)
                 self.outputMessage += serverName + "(0): 服务器连接失败\n"

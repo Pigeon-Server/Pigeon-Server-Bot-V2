@@ -1,11 +1,10 @@
 from module.BasicModule.Logger import logger
 from qcloud_cos import CosConfig, CosS3Client
 from qcloud_cos.cos_exception import CosClientError, CosServiceError
-from qcloud_cos.cos_comm import CiDetectType
 from module.Class.ExceptionClass import IncomingParametersError, NoKeyError
 from os.path import exists, split, join
-from typing import Union
-
+from typing import Optional, List
+from module.BasicModule.Config import ImageList
 
 class CosClass:  # Cos属于付费接口，尽量少调用
     __ConnectConfig = None
@@ -15,8 +14,8 @@ class CosClass:  # Cos属于付费接口，尽量少调用
     connected: bool = False
 
     def __init__(self, SecretId: str, SecretKey: str, region: str, Bucket: str, Path: str,
-                 token: Union[str, None] = None,
-                 SSL: bool = True, proxies: bool = False, agentAddress: dict = None) -> None:
+                 token: Optional[str] = None,
+                 SSL: bool = True, proxies: bool = False, agentAddress: Optional[dict] = None) -> None:
 
         """
         构造函数\n
@@ -78,7 +77,7 @@ class CosClass:  # Cos属于付费接口，尽量少调用
         except CosClientError as error:
             logger.error(f"连接cos失败: {error}")
 
-    def UploadFile(self, files: list, Bucket: str = None, Path: str = None, EnableMD5: bool = False) -> list:
+    def UploadFile(self, files: list, Bucket: Optional[str] = None, Path: Optional[str] = None, EnableMD5: bool = False) -> list:
 
         """
         上传文件至cos\n
@@ -109,6 +108,7 @@ class CosClass:  # Cos属于付费接口，尽量少调用
                             )
                             logger.debug(response['ETag'])
                             SuccessList.append(join(Path, file.rsplit("/")[-1]))
+                            ImageList.EditData(split(file)[-1], "Wait")
                             break
                         except CosClientError or CosServiceError as err:
                             logger.error(f"第[{i}]次上传文件发生错误：{err}")
@@ -118,7 +118,7 @@ class CosClass:  # Cos属于付费接口，尽量少调用
                 logger.error("文件不存在：" + file)
         return SuccessList
 
-    def DelFile(self, Bucket: str, files: list, VersionId=None) -> list:
+    def DelFile(self, Bucket: str, files: list, VersionId: Optional[str] = None) -> list:
 
         """
         删除cos中的文件\n
@@ -149,7 +149,7 @@ class CosClass:  # Cos属于付费接口，尽量少调用
                 logger.debug(f"删除{file}失败")
         return SuccessList
 
-    def Get_File_URL(self, file, Bucket=None):
+    def Get_File_URL(self, file, Bucket: Optional[str] = None):
 
         """
         获取存储桶中文件访问URL
@@ -164,51 +164,58 @@ class CosClass:  # Cos属于付费接口，尽量少调用
         else:
             return False
 
-    def Files_Content_Recognition(self, Files: list, BizType: str, Interval=3, MaxFrames=5, Bucket=None, Compression=False):
+    async def FilesContentRecognition(self, Files: list, BizType: str, Interval: int = 3, MaxFrames: int = 5, Bucket: Optional[str] = None, Compression: bool = False, callback=None) -> Optional[str]:
         """
-        :param Bucket: 存储桶
-        :param Files: 文件名列表，如果文件名为URL将无需填写存储桶
-        :param BizType: 审核策略的唯一标识，由后台自动生成，在控制台中对应为 Biztype 值。
-        :param Interval: 审核 GIF 动图时，可使用该参数进行截帧配置，代表截帧的间隔。例如值设为5，则表示从第1帧开始截取，每隔5帧截取一帧，默认值3。
-        :param MaxFrames: 针对 GIF 动图审核的最大截帧数量，需大于0。例如值设为5，则表示最大截取5帧，默认值为5。
-        :param Compression: 对于超过大小限制的图片是否进行压缩后再审核，取值为： False（不压缩），True（压缩）。默认为0。注：压缩最大支持32MB的图片，且会收取图片压缩费用。对于 GIF 等动态图过大时，压缩时间较长，可能会导致审核超时失败。
-        :return:
-        file_name:{
-            response:response
-        }
+        审核图片\n
+        Args:
+            Bucket: 存储桶
+            Files: 文件名列表，如果文件名为URL将无需填写存储桶
+            BizType: 审核策略的唯一标识，由后台自动生成，在控制台中对应为 Biztype 值。
+            Interval: 审核 GIF 动图时，可使用该参数进行截帧配置，代表截帧的间隔。例如值设为5，则表示从第1帧开始截取，每隔5帧截取一帧，默认值3。
+            MaxFrames: 针对 GIF 动图审核的最大截帧数量，需大于0。例如值设为5，则表示最大截取5帧，默认值为5。
+            Compression: 对于超过大小限制的图片是否进行压缩后再审核，取值为： False（不压缩），True（压缩）。默认为0。注：压缩最大支持32MB的图片，且会收取图片压缩费用。对于 GIF 等动态图过大时，压缩时间较长，可能会导致审核超时失败。
+            callback: 回调函数，如果传入则调用，不传入回调则直接返回结果
+        Return:
+            dict: file_name:{response:response}
         """
         Bucket = self.__Bucket if Bucket is None else Bucket
         Compression = 1 if Compression else 0
-        response = {}
-        for file_name in Files:
-            try:
-                if file_name[:4] in "http":
-                    Temp_response = self.__client.get_object_sensitive_content_recognition(
-                        Bucket=Bucket,
-                        Key=None,
-                        DetectUrl=file_name,
-                        BizType=BizType,
-                        Interval=Interval,
-                        MaxFrames=MaxFrames,
-                        LargeImageDetect=Compression
-                    )
-                    response[file_name] = Temp_response
+        inputData: List[dict] = []
+        for fileName in Files:
+            if fileName[:4] == "http":
+                inputData.append({
+                    'Url': fileName,
+                    'Interval': Interval,
+                    'MaxFrames': MaxFrames,
+                    'LargeImageDetect': Compression
+                })
+            else:
+                inputData.append({
+                    'Object': f"{self.__Path}/{fileName}",
+                    'Interval': Interval,
+                    'MaxFrames': MaxFrames,
+                    'LargeImageDetect': Compression
+                })
+        try:
+            for item in self.__client.ci_auditing_image_batch(Bucket=Bucket, BizType=BizType, Input=inputData)["JobsDetail"]:
+                if "Url" in item.keys():
+                    FileName = item["Url"][len(item["Url"])-33-len(item["Url"].split(".")[1]):]
+                elif "Object" in item.keys():
+                    FileName = item["Object"][len(item["Object"]) - 33 - len(item["Object"].split(".")[1]):]
                 else:
-                    file_name = f"{self.__Path}/{file_name}"
-                    if self.__client.object_exists(Bucket, Key=file_name):
-                        Temp_response = self.__client.get_object_sensitive_content_recognition(
-                            Bucket=Bucket,
-                            Key=file_name,
-                            BizType=BizType,
-                            Interval=Interval,
-                            MaxFrames=MaxFrames,
-                            LargeImageDetect=Compression
-                        )
-                        response[file_name] = Temp_response
-                    else:
-                        logger.error(f"文件{file_name}不存在")
-            except:
-                response.update(file_name)
-                response[file_name] = False
-                logger.error(f"{file_name}审核失败")
-        return response
+                    logger.error("图片识别返回值出错")
+                    return None
+                logger.debug(FileName)
+                logger.debug(item["Label"])
+                logger.debug(item["Result"])
+                logger.debug(item["Score"])
+                ImageList.EditData(FileName, "Wait", delData=True)
+                if item["Result"] == '1' or (item["Result"] == '2' and item["Score"] >= 60):
+                    logger.debug("违规")
+                    ImageList.EditData(FileName, "NoPass")
+                    return "违规图片" if callback is None else await callback("违规图片")
+                ImageList.EditData(FileName, "Pass")
+        except:
+            logger.error("图片识别出现错误")
+            return None
+

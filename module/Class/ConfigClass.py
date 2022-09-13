@@ -1,108 +1,141 @@
-from json5.lib import load, dumps
+from json5.lib import load
 from pathlib import Path
 from module.BasicModule.Logger import logger
-from sys import exit
+from typing import Union, Optional
 
-
-class ConfigClass:
-
-    Config: dict
-    FAQ: dict
-    server: dict
-    word: list
-    exception: list
-    module: dict
-
-    def __init__(self):
-        logger.debug("正在加载主配置文件")
-        try:
-            self.Config = self.loadConfig("config.json5")
-            logger.success("主配置文件加载完成")
-        except:
-            logger.error("主配置文件加载失败")
-            exit()
-        logger.debug("正在加载模块配置")
-        try:
-            self.module = self.loadConfig("module.json5")
-            logger.success("模块配置加载完成")
-        except:
-            logger.error("模块配置加载失败")
-            exit()
-        if self.module["Questions"]:
-            logger.debug("正在加载问答模块")
-            try:
-                self.FAQ = self.loadConfig("FAQ.json5")
-                logger.success("问答模块加载完成")
-            except:
-                logger.error("加载问答模块失败")
-                exit()
-        if self.module["WhiteList"] or self.module["BlackList"]:
-            logger.debug("正在加载服务器配置")
-            try:
-                self.server = self.loadConfig("server.json5")
-                logger.success("服务器配置加载完成")
-            except:
-                logger.error("加载服务器配置失败")
-                exit()
-        if self.module["BlockWord"]:
-            logger.debug("正在加载违禁词和排除名单")
-            try:
-                self.word = self.loadConfig("word.json5")
-                logger.success("违禁词和排除名单加载完成")
-            except:
-                logger.error("违禁词和排除名单加载失败")
-                exit()
-        if self.module["Shutup"]:
-            logger.debug("正在加载屏蔽名单")
-            try:
-                self.exception = self.loadConfig("except.json5")
-                logger.success("屏蔽名单加载完成")
-            except:
-                logger.error("屏蔽名单加载失败")
-                exit()
-        logger.success("所有配置文件加载完毕")
-
-    async def reloadConfig(self) -> dict:
-        try:
-            logger.debug("正在重载问答配置文件")
-            self.FAQ = self.loadConfig("FAQ.json5")
-            logger.success("问答配置文件重载完成")
-            logger.debug("正在重载违禁词和排除名单")
-            self.word = self.loadConfig("word.json5")
-            logger.success("违禁词和排除名单重载完成")
-            logger.debug("正在重载屏蔽名单")
-            self.exception = self.loadConfig("except.json5")
-            logger.success("屏蔽名单重载完成")
-            return True
-        except:
-            logger.error("重载配置文件发生错误")
-            return False
-
-    async def WriteException(self, id: int) -> bool:
-        if id in self.exception:
-            self.exception.remove(id)
-            with open("config/except.json5", 'w', encoding="UTF-8") as f:
-                f.write(dumps(self.exception, indent=4, ensure_ascii=False))
-            return False
-        else:
-            self.exception.append(id)
-            with open("config/except.json5", 'w', encoding="UTF-8") as f:
-                f.write(dumps(self.exception, indent=4, ensure_ascii=False))
-            return True
-
+class ConfigTools:
     @staticmethod
-    def loadConfig(filename: str) -> dict:
-
+    def loadConfig(filename: str, objectTarget: Optional[object] = None) -> Union[dict, list, object]:
         """
         加载config\n
-        :param filename: 要加载的配置文件名(str)
-        :return: dict
+        Args:
+            filename: 要加载的配置文件名(str)
+            objectTarget: 传入实例化对象
+        Return:
+            object: 实例化对象
         """
-
         if not Path("config/" + filename).is_file():
             logger.error(f"{filename}配置文件不存在")
         else:
             try:
-                return load(open(f"config/{filename}", "r", encoding="UTF-8", errors="ignore"))
+                return load(open(f"config/{filename}", "r", encoding="UTF-8", errors="ignore")) if objectTarget is None else load(open(f"config/{filename}", "r", encoding="UTF-8", errors="ignore"), object_hook=objectTarget)
             except:
-                logger.error(f"{filename}已损坏，正在尝试重新创建")
+                logger.error(f"{filename}已损坏")
+
+
+class ConnectConfig:
+    SecretId: str
+    SecretKey: str
+    Region: str
+    Token: str
+    SSL: bool
+
+class CosConfig:
+    BizType: str
+    Bucket: str
+    Path: str
+    enableAgent: bool
+    agentAddress: bool
+    ConnectConfig: ConnectConfig
+
+class DataBaseConfig:
+    Host: str
+    Password: str
+    Username: str
+    DatabaseName: str
+    Port: int
+
+class GroupConfig:
+    AdminGroup: int
+    PlayerGroup: int
+
+class MiraiHTTP:
+    Host: str
+    Key: str
+    Port: int
+    SyncId: str
+    SingleMode: bool
+
+class MiraiBotConfig:
+    QQ: int
+    ConnectType: str
+    WebSocketPort: int
+    GroupConfig: GroupConfig
+    MiraiHTTP: MiraiHTTP
+
+class WebsocketConfig:
+    host: str
+    port: int
+
+class Age:
+    min: int
+    max: int
+
+class AutomaticReview:
+    level: int
+    age: Age
+    Refuse: bool
+    BlackList: bool
+
+class ConfigInit:
+    ConfigVersion: float
+    infoLimit: int
+    CosConfig: CosConfig
+    DataBaseConfig: DataBaseConfig
+    MiraiBotConfig: MiraiBotConfig
+    WebsocketConfig: WebsocketConfig
+    ServerList: object
+    AutomaticReview: AutomaticReview
+    UpdateCheckInterval: int
+    WelcomeMessage: str
+
+    def __init__(self, json):
+        self.__dict__ = json
+
+class RconConfig:
+    RconHost: str
+    RconPassword: str
+    RconPort: int
+
+class Whitelist:
+    Add: str
+    Del: str
+
+class Ban:
+    Add: str
+    Del: str
+
+class Bot:
+    Del: str
+
+class VanillaCommand:
+    Whitelist: Whitelist
+    Ban: Ban
+    Bot: Bot
+
+class VanillaServer:
+    ServerName: str
+    RconConfig: RconConfig
+    Command: VanillaCommand
+
+class ServerConfigInit:
+    VanillaServer: VanillaServer
+
+    def __init__(self, json):
+        self.__dict__ = json
+
+class ModuleConfigInit:
+    WebsocketReport: bool
+    ImageReview: bool
+    BlackList: bool
+    WhiteList: bool
+    BlockWord: bool
+    Questions: bool
+    Shutup: bool
+    Online: bool
+    AutomaticReview: bool
+    DebugMode: bool
+    CheckMCUpdate: bool
+
+    def __init__(self, json):
+        self.__dict__ = json

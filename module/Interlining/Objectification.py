@@ -1,20 +1,23 @@
 from module.Class.WhitelistClass import WhitelistClass
 from module.Class.ServerClass import MinecraftServer
-from module.BasicModule.Config import config
+from module.BasicModule.Config import MainConfig, ModuleConfig
 from module.Class.ServerStatusClass import ServerStatus
 from module.Class.BlackListClass import BlackListClass
 from module.Class.QueryClass import QueryClass
 from asyncio.runners import run
+from sys import exit
 
-if config.module["WhiteList"] or config.module["BlackList"]:
-    vanillaServer = MinecraftServer(config.server["VanillaServer"]["ServerName"], config.server["VanillaServer"]["RconConfig"], config.server["VanillaServer"]["Command"])
-    testServer = MinecraftServer(config.server["TestServer"]["ServerName"], config.server["TestServer"]["RconConfig"], config.server["TestServer"]["Command"])
-    run(vanillaServer.TestConnection())
-    run(testServer.TestConnection())
-if config.module["WhiteList"]:
+if ModuleConfig.WhiteList or ModuleConfig.BlackList:
+    from module.BasicModule.Config import ServerConfig
+    try:
+        vanillaServer = MinecraftServer(ServerConfig.VanillaServer.ServerName, vars(ServerConfig.VanillaServer.RconConfig), vars(ServerConfig.VanillaServer.Command))
+        run(vanillaServer.TestConnection())
+    except:
+        exit()
+if ModuleConfig.WhiteList:
     whitelist = WhitelistClass(vanillaServer)
-if config.module["BlackList"]:
+if ModuleConfig.BlackList:
     blacklist = BlackListClass(vanillaServer)
-if config.module["Online"]:
-    server = ServerStatus(config.Config["ServerList"])
+if ModuleConfig.Online:
+    server = ServerStatus(vars(MainConfig.ServerList))
 query = QueryClass()

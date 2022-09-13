@@ -1,4 +1,4 @@
-from module.BasicModule.Config import config
+from module.BasicModule.Config import MainConfig, FAQConfig, ModuleConfig
 from module.BasicModule.SqlRelate import connected, cursor
 from mirai.models.message import MessageChain, At
 from mirai.models.events import GroupMessage
@@ -8,6 +8,8 @@ from hashlib import md5
 from module.BasicModule.Logger import logger
 from os.path import exists, join
 from typing import Union
+if ModuleConfig.ImageReview:
+    from module.BasicModule.Config import ImageList
 
 def IsAdminGroup(Group: str) -> bool:
     """
@@ -16,7 +18,7 @@ def IsAdminGroup(Group: str) -> bool:
     :return: true/false
     """
 
-    return Group == config.Config["MiraiBotConfig"]["GroupConfig"]["AdminGroup"]
+    return Group == MainConfig.MiraiBotConfig.GroupConfig.AdminGroup
 
 
 def IsPlayerGroup(Group: str) -> bool:
@@ -26,7 +28,7 @@ def IsPlayerGroup(Group: str) -> bool:
     :return: true/false
     """
 
-    return Group == config.Config["MiraiBotConfig"]["GroupConfig"]["PlayerGroup"]
+    return Group == MainConfig.MiraiBotConfig.GroupConfig.PlayerGroup
 
 
 def PingDataBase() -> None:
@@ -45,7 +47,7 @@ def IsAtBot(chain: MessageChain) -> bool:
     """
 
     if chain.has(At):
-        return chain.get_first(At).target == config.Config["MiraiBotConfig"]["QQ"]
+        return chain.get_first(At).target == MainConfig.MiraiBotConfig.QQ
 
 
 def FindAnswer(event: GroupMessage) -> Union[str, None]:
@@ -58,18 +60,21 @@ def FindAnswer(event: GroupMessage) -> Union[str, None]:
     message: str = str(event.message_chain)  # 将消息链转换成文本
     respond: str = None
 
-    if str(event.group.id) in config.FAQ.keys():  # 如果群号在字典内出现
-        answer: dict = config.FAQ[str(event.group.id)]  # 提取该群的回答
+    if str(event.group.id) in FAQConfig.keys():  # 如果群号在字典内出现
+        answer: dict = FAQConfig[str(event.group.id)]  # 提取该群的回答
         for raw in answer:  # 循环关键字
             if raw in message:  # 如果匹配
                 respond = answer[raw]  # 返回结果
     if respond is None:  # 如果第一层循环没有找到答案
-        Global: dict = config.FAQ["global"]  # 提取出全局问答
+        if event.group.id == MainConfig.MiraiBotConfig.GroupConfig.AdminGroup:
+            return None
+        Global: dict = FAQConfig["global"]  # 提取出全局问答
         for raw in Global:  # 循环关键字
             if raw in message:  # 如果匹配
                 return Global[raw]  # 返回结果
-    else:
         return None  # 两遍循环都没找到则返回None
+    else:
+        return respond  # 如果第一层循环找到答案就直接返回
 
 
 async def Segmentation(send, message: str) -> None:
@@ -82,7 +87,7 @@ async def Segmentation(send, message: str) -> None:
     """
 
     if len(message) > 1000:
-        number: int = config.Config["infolimit"]  # 获取行数限制
+        number: int = MainConfig.infoLimit  # 获取行数限制
         count: int = 0  # 初始化计数器
         data = message[:-1].rsplit("\n")  # 分隔字符串
         tempMessage: str = ""  # 初始化输出变量
@@ -157,7 +162,7 @@ def JudgeToken(id: int) -> dict:
             "info": "未查询到玩家"
         }
 
-async def DownloadFile(urls: list, Path: str, FileName: Union[list, bool], callback=None) -> Union[list, None]:
+async def DownloadFile(urls: list, Path: str, FileName: Union[list, bool], recall, callback=None) -> Union[list, None]:
 
     """
     从url下载文件\n
@@ -165,12 +170,14 @@ async def DownloadFile(urls: list, Path: str, FileName: Union[list, bool], callb
         urls: 文件列表
         Path: 保存的目录
         FileName: 文件名
+        recall: 撤回回调函数
         callback: 回调函数,可为空
     """
 
     SuccessList: list = []
     for index, url in enumerate(urls, 0):
         try:
+            logger.debug("准备下载文件，URL：" + url)
             fileio = get(url)
         except:
             logger.error("下载失败，URL：" + url)
@@ -182,9 +189,16 @@ async def DownloadFile(urls: list, Path: str, FileName: Union[list, bool], callb
                     fileName = join(Path, f"{fileMd5}.{FileType.extension}")
                 else:
                     fileName = join(Path, fileMd5)
+                if ImageList.QueryData(f"{fileMd5}.{FileType.extension}", "NoPass"):
+                    logger.debug("已记录为违规图片，撤回")
+                    return await recall("违规图片")
                 if not exists(fileName):
+                    if ImageList.QueryData(f"{fileMd5}.{FileType.extension}", "Pass"):
+                        logger.debug("已判断通过,不保存")
+                        continue
                     SuccessList.append(fileName)
                     open(fileName, "wb").write(fileio.content)
+                    logger.debug(f"文件保存为{fileName}")
                 fileio.close()
             else:
                 if FileType:  # 文件名拼接
@@ -194,5 +208,8 @@ async def DownloadFile(urls: list, Path: str, FileName: Union[list, bool], callb
                 if not exists(fileName):
                     SuccessList.append(fileName)
                     open(fileName, "wb").write(fileio.content)
+                    logger.debug(f"文件保存为{fileName}")
                 fileio.close()
     return SuccessList if callback is None else callback(SuccessList)
+
+
