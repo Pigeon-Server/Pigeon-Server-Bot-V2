@@ -1,4 +1,5 @@
 from json import load, dumps
+from os import mkdir
 from os.path import exists
 from typing import Union, Optional
 from enum import Enum
@@ -15,8 +16,8 @@ class DataType(Enum):
 
 
 class JsonDataBaseCLass:
-    __DataBaseName: str
-    __DataType: int
+    _DataBaseName: str
+    _DataType: int
     Data: list | dict = None
 
     def __init__(self, fileName: str, dataType: int) -> None:
@@ -26,8 +27,10 @@ class JsonDataBaseCLass:
             fileName: 要使用的文件名，应该位于data文件夹下，如果不存在会自动创建
             dataType: 文件内存储的格式 1:str 2:int 3: float 4: list: 5: dict 除了dict外，其他类型均为list存储
         """
-        self.__DataBaseName = fileName
-        self.__DataType = dataType
+        self._DataBaseName = fileName
+        self._DataType = dataType
+        if not exists("data"):
+            mkdir("data")
         if exists(f"data/{fileName}"):
             self.Data = load(open(f"data/{fileName}", "r", encoding="UTF-8", errors="ignore"))
         else:
@@ -57,11 +60,12 @@ class JsonDataBaseCLass:
             bool: True 成功  False 失败
         """
         backupData = self.Data
-        if DataType(self.__DataType) == DataType.DICT and target is None:
+        if DataType(self._DataType) == DataType.DICT and target is None:
             raise NoKeyError("未指定修改的键值")
-        elif DataType(self.__DataType) == DataType.DICT and target is not None:
+        elif DataType(self._DataType) == DataType.DICT and target is not None:
             if target not in self.Data.keys():
-                self.Data[target] = data
+                if not delData:
+                    self.Data[target] = data
             else:
                 tempData = self.Data[target]
                 if isinstance(tempData, list):
@@ -73,25 +77,25 @@ class JsonDataBaseCLass:
                         self.Data[target] = data
                     else:
                         raise RuntimeError("不支持此类修改")
-        if DataType(self.__DataType) == DataType.DICT:
+        if DataType(self._DataType) == DataType.DICT:
             try:
-                with open(f"data/{self.__DataBaseName}", 'w', encoding="UTF-8") as file:
+                with open(f"data/{self._DataBaseName}", 'w', encoding="UTF-8") as file:
                     file.write(dumps(self.Data, indent=4, ensure_ascii=False))
                 return True
             except:
                 self.Data = backupData
-                with open(f"data/{self.__DataBaseName}", 'w', encoding="UTF-8") as file:
+                with open(f"data/{self._DataBaseName}", 'w', encoding="UTF-8") as file:
                     file.write(dumps(self.Data, indent=4, ensure_ascii=False))
                 return False
         else:
             try:
                 self.Data.remove(data) if delData else self.Data.append(data)
-                with open(f"data/{self.__DataBaseName}", 'w', encoding="UTF-8") as file:
+                with open(f"data/{self._DataBaseName}", 'w', encoding="UTF-8") as file:
                     file.write(dumps(self.Data, indent=4, ensure_ascii=False))
                 return True
             except:
                 self.Data = backupData
-                with open(f"data/{self.__DataBaseName}", 'w', encoding="UTF-8") as file:
+                with open(f"data/{self._DataBaseName}", 'w', encoding="UTF-8") as file:
                     file.write(dumps(self.Data, indent=4, ensure_ascii=False))
                 return False
 
@@ -99,7 +103,14 @@ class JsonDataBaseCLass:
         """
         重新从文件加载数据\n
         """
-        self.Data = load(open(f"data/{self.__DataBaseName}", "r", encoding="UTF-8", errors="ignore"))
+        self.Data = load(open(f"data/{self._DataBaseName}", "r", encoding="UTF-8", errors="ignore"))
+
+    def WriteData(self) -> None:
+        """
+        将本地缓存的内容写入文件\n
+        """
+        with open(f"data/{self._DataBaseName}", 'w', encoding="UTF-8") as file:
+            file.write(dumps(self.Data, indent=4, ensure_ascii=False))
 
     def QueryData(self, data: Union[str, int, float, list, dict], target: Optional[str] = None) -> bool:
         """
@@ -114,9 +125,11 @@ class JsonDataBaseCLass:
         Return:
             bool: True 成功  False 失败
         """
-        if DataType(self.__DataType) == DataType.DICT:
+        if DataType(self._DataType) == DataType.DICT:
             if target is None:
                 raise NoKeyError("未指定查询的键值")
+            elif target not in self.Data.keys():
+                return False
             else:
                 tempData = self.Data[target]
                 if isinstance(tempData, list):
@@ -129,3 +142,4 @@ class JsonDataBaseCLass:
                     raise RuntimeError("不支持此类型的查询")
         else:
             return True if data in self.Data else False
+

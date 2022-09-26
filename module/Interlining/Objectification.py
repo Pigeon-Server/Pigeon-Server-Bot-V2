@@ -4,6 +4,7 @@ from module.BasicModule.Config import MainConfig, ModuleConfig
 from module.Class.ServerStatusClass import ServerStatus
 from module.Class.BlackListClass import BlackListClass
 from module.Class.QueryClass import QueryClass
+from module.Class.MCSManagerClass import MCSMClass
 from asyncio.runners import run
 from sys import exit
 
@@ -20,4 +21,6 @@ if ModuleConfig.BlackList:
     blacklist = BlackListClass(vanillaServer)
 if ModuleConfig.Online:
     server = ServerStatus(vars(MainConfig.ServerList))
+if ModuleConfig.MCSMModule:
+    MCSM = MCSMClass(MainConfig.MCSMConfig.apikey, MainConfig.MCSMConfig.apiurl)
 query = QueryClass()

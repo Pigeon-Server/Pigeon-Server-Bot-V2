@@ -1,15 +1,17 @@
 # 基础模块导入
 from module.Interlining.Bot import bot, message, control, interrupt  # 导入bot基类，消息发送模块，事件控制器模块
-from module.BasicModule.Config import MainConfig, ModuleConfig, ExceptList, BlockingWordList  # 配置类示例导入
+from module.BasicModule.Config import MainConfig, ModuleConfig  # 配置类示例导入
 from mirai_extensions.trigger import Filter  # 导入过滤器模块
 from mirai.bot import Startup, Shutdown  # 导入机器人启动关闭事件
 from re import match as rematch  # 导入正则表达式并重命名（与match冲突）
-from mirai.models.message import Plain
+from mirai.models.message import Plain, At
 from mirai.models.events import GroupMessage, MemberJoinRequestEvent, MemberJoinEvent  # 导入群组消息模型
-from module.BasicModule.SqlRelate import cursor, database  # 导入数据库事务和连接实例
+from module.BasicModule.SqlRelate import cursor  # 导入数据库事务和连接实例
 from module.BasicModule.Logger import logger  # 导入日志记录模块
 from module.Interlining.UsefulTools import IsAdminGroup, IsPlayerGroup, Segmentation, PingDataBase  # 判断是否是管理群或玩家群，消息切分，ping数据库
 from module.Interlining.Objectification import query  # 导入查询类实例
+from module.BasicModule.SqlRelate import connected
+from module.BasicModule.Permission import per
 
 # 是否查询MC更新
 if ModuleConfig.CheckMCUpdate:
@@ -22,7 +24,6 @@ if ModuleConfig.CheckMCUpdate:
         while True:
             await sleep(MainConfig.UpdateCheckInterval)
             await CheckUpdate()
-
 
 # 是否启用WebSocket上报（未完成）
 if ModuleConfig.WebsocketReport:
@@ -39,6 +40,7 @@ if ModuleConfig.WebsocketReport:
                     websocket.clientInfo[data['uuid']] = data['name']
                 elif data['type'] == "OfflineBroadcast":
                     del websocket.clientInfo[data['uuid']]
+
 
     @bot.on(Shutdown)
     async def DisConnection(event: Shutdown):
@@ -67,7 +69,7 @@ if ModuleConfig.ImageReview:
 # 是否启用问答模块
 if ModuleConfig.Questions:
     from module.Interlining.UsefulTools import FindAnswer  # 搜索答案方法
-
+    from module.BasicModule.Config import ExceptList
 
     @Filter(GroupMessage)
     def AnswerJudge(event: GroupMessage):
@@ -86,9 +88,10 @@ if ModuleConfig.Questions:
     @control.on(AnswerJudge)
     async def Answer(event: GroupMessage, respond: str):
         if respond is not None:
-            await message.SendMessage(event.group.id, respond, groupName=event.group.name, targetMessage=event.message_chain.message_id)
+            await message.SendMessage(event.group.id, respond, groupName=event.group.name,
+                                      targetMessage=event.message_chain.message_id)
 # 是否允许玩家自主设置屏蔽
-if ModuleConfig.Shutup:
+if ModuleConfig.Shutup and ModuleConfig.Questions:
     from module.Interlining.UsefulTools import IsAtBot  # 判断是否艾特了机器人
 
 
@@ -104,10 +107,10 @@ if ModuleConfig.Shutup:
         if execute:
             if event.sender.id in ExceptList.Data:
                 ExceptList.EditData(event.sender.id, delData=True)
-                await message.SendMessage(event.group.id, "是否屏蔽:否", groupName=event.group.name)
+                await message.SendMessage(event.group.id, "坏了，我嘴闭不上了", groupName=event.group.name)
             else:
                 ExceptList.EditData(event.sender.id)
-                await message.SendMessage(event.group.id, "是否屏蔽:是", groupName=event.group.name)
+                await message.SendMessage(event.group.id, "好了，我闭嘴了", groupName=event.group.name)
 
 # 是否开启在线人数查询
 if ModuleConfig.Online:
@@ -130,6 +133,8 @@ if ModuleConfig.Online:
 
 # 是否开启触发关键词撤回
 if ModuleConfig.BlockWord:
+    from module.BasicModule.Config import BlockingWordList
+
     @Filter(GroupMessage)
     def BlockingWordSpy(event: GroupMessage):
         msg: str = str(event.message_chain)
@@ -161,6 +166,7 @@ if ModuleConfig.AutomaticReview:
     count: int = 1
     processing: int = 1
 
+
     @bot.on(MemberJoinRequestEvent)
     async def ReviewJoin(event: MemberJoinRequestEvent):
         memberId = event.from_id
@@ -169,65 +175,461 @@ if ModuleConfig.AutomaticReview:
             memberInfo = await bot.user_profile(memberId)
             global count, processing
             temp = count
-            if (MainConfig.AutomaticReview.age.min <= memberInfo.age <= MainConfig.AutomaticReview.age.max) and memberInfo.level >= MainConfig.AutomaticReview.level:
+            send = "[{groupName}]有一条入群申请:\n" + f"QQ名: {memberInfo.nickname}\nQQ号: {memberId}\n等级: {memberInfo.level}\n" \
+                   f"年龄: {memberInfo.age}\n入群信息：\n{event.message}\n个性签名: {memberInfo.sign}\n" + "处理结果：{result}"
+            if (MainConfig.AutomaticReview.age.min <= memberInfo.age <= MainConfig.AutomaticReview.age.max) and \
+                    memberInfo.level >= MainConfig.AutomaticReview.level:
                 await bot.allow(event)
-                await message.AdminMessage(f"[{message.PlayerName if IsPlayerGroup(groupId) else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
-                                           f"QQ名: {memberInfo.nickname}\n"
-                                           f"QQ号: {memberId}\n"
-                                           f"等级: {memberInfo.level}\n"
-                                           f"年龄: {memberInfo.age}\n"
-                                           f"入群信息：\n{event.message}\n"
-                                           f"个性签名: {memberInfo.sign}\n"
-                                           f"处理结果： 满足入群条件，已同意")
+                await message.AdminMessage(send.format(groupName=message.PlayerName if IsPlayerGroup(groupId) else (await bot.get_group(groupId)).name,
+                                                       result="满足入群条件，已同意"))
             elif MainConfig.AutomaticReview.Refuse:
-                await message.AdminMessage(f"[{message.PlayerName if IsPlayerGroup(groupId) else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
-                                           f"QQ名: {memberInfo.nickname}\n"
-                                           f"QQ号: {memberId}\n"
-                                           f"等级: {memberInfo.level}\n"
-                                           f"年龄: {memberInfo.age}\n"
-                                           f"入群信息：\n{event.message}\n"
-                                           f"个性签名: {memberInfo.sign}\n"
-                                           f"处理结果： 未满足入群条件，已自动拒绝")
+                await message.AdminMessage(send.format(groupName=message.PlayerName if IsPlayerGroup(groupId) else (await bot.get_group(groupId)).name,
+                                                       result="未满足入群条件，已自动拒绝"))
                 await bot.decline(event, "未达到入群要求", ban=MainConfig.AutomaticReview.BlackList)
             else:
-                await message.AdminMessage(f"[{message.PlayerName if IsPlayerGroup(groupId) else (await bot.get_group(groupId)).name}]有一条入群申请:\n"
-                                           f"ID: {count}\n"
-                                           f"QQ名: {memberInfo.nickname}\n"
-                                           f"QQ号: {memberId}\n"
-                                           f"等级: {memberInfo.level}\n"
-                                           f"年龄: {memberInfo.age}\n"
-                                           f"入群信息：\n{event.message}\n"
-                                           f"个性签名: {memberInfo.sign}\n"
-                                           f"处理结果： 未满足入群条件，需人工审核(是/否/拉黑/忽略)")
+                await message.AdminMessage(send.format(groupName=message.PlayerName if IsPlayerGroup(groupId) else (await bot.get_group(groupId)).name,
+                                                       result="未满足入群条件，需人工审核(是/否/拉黑/忽略)"))
                 count += 1
 
                 @Filter(GroupMessage)
                 def WaitCommit(msg: GroupMessage):
                     if msg.message_chain.has(Plain) and IsAdminGroup(msg.group.id) and temp == processing:
                         res = msg.message_chain.get_first(Plain).text
-                        if "是" == res:
-                            return 1
-                        elif "否" == res:
-                            return 2
-                        elif "拉黑" == res:
-                            return 3
-                        elif "忽略" == res:
-                            return 4
+                        if res.startswith("是"):
+                            return {
+                                "code": 1
+                            }
+                        elif res.startswith("否"):
+                            if len(res) > 1:
+                                return {
+                                    "code": 2,
+                                    "message": res[2:]
+                                }
+                            else:
+                                return {
+                                    "code": 3
+                                }
+                        elif res.startswith("忽略"):
+                            if len(res) > 2:
+                                return {
+                                    "code": 4,
+                                    "message": res[3:]
+                                }
+                            else:
+                                return {
+                                    "code": 5
+                                }
+                        elif res.startswith("忽略"):
+                            return {
+                                    "code": 6
+                                }
 
-                match await interrupt.wait(WaitCommit):
+                data = await interrupt.wait(WaitCommit)
+                match data["code"]:
                     case 1:
                         await message.AdminMessage("已同意")
                         await bot.allow(event)
                     case 2:
-                        await message.AdminMessage("已拒绝")
-                        await bot.decline(event, "未达到入群标准")
+                        await message.AdminMessage(f"已拒绝, 理由:{data['message']}")
+                        await bot.decline(event, data["message"])
                     case 3:
+                        await message.AdminMessage(f"已拉黑")
+                        await bot.decline(event, "未达到入群标准")
+                    case 4:
+                        await message.AdminMessage("已拉黑")
+                        await bot.decline(event, data["message"], ban=True)
+                    case 5:
                         await message.AdminMessage("已拒绝")
                         await bot.decline(event, "未达到入群标准", ban=True)
-                    case 4:
+                    case 6:
                         await message.AdminMessage("已忽略")
                         await bot.ignore(event)
                 processing += 1
+
+# MCSM模块
+if ModuleConfig.MCSMModule:
+    from threading import Thread
+    from asyncio.tasks import sleep
+    from module.Interlining.Objectification import MCSM
+    MCSM.GetMCSMInfo()
+
+    @bot.add_background_task()
+    async def CheckStatus():
+        while True:
+            Thread(target=MCSM.UpdateInstanceStatus).start()
+            await sleep(30)
+
+    @bot.on(GroupMessage)
+    async def MCSMCommand(event: GroupMessage):
+        async def send(sendMessage: str) -> None:
+            await message.SendMessage(event.group.id, sendMessage, event.group.name)
+        msg = str(event.message_chain)
+        if msg.startswith('/mcsm') or msg.startswith('!mcsm'):
+            command = msg[6:].rsplit(" ")
+            commandLen = len(command)
+            if command[0] == "":
+                await send("MCSM模块帮助：\n"
+                           "/mcsm check (InstanceName) [ServerName] 查询指定实例信息\n"
+                           "/mcsm list [ServerName] 列出某一守护进程的所有实例名称\n"
+                           "/mcsm rename (OriginalName) (NewName) 重命名某一守护进程或实例\n"
+                           "/mcsm update [true] （强制）更新实例信息\n"
+                           "/mcsm stop (InstanceName) [ServerName] 停止某一实例\n"
+                           "/mcsm kill (InstanceName) [ServerName] 强行停止某一实例\n"
+                           "/mcsm start (InstanceName) [ServerName] 开启某一实例\n"
+                           "/mcsm restart (InstanceName) [ServerName] 重启某一实例\n"
+                           "/mcsm command (InstanceName) (ServerName) (Command) 向某一实例执行命令")
+            elif event.sender.id == 1483073537:
+                if commandLen >= 1:
+                    if command[0] == "check":
+                        if commandLen == 2:
+                            await send(MCSM.CheckInstanceStatus(command[1]))
+                        elif commandLen == 3:
+                            await send(MCSM.CheckInstanceStatus(command[1], command[2]))
+                    elif command[0] == "list":
+                        if commandLen == 1:
+                            await send(MCSM.ListInstance())
+                        elif commandLen == 2:
+                            await send(MCSM.ListInstance(command[1]))
+                    elif command[0] == "rename":
+                        if commandLen == 3:
+                            await send(MCSM.ReName(command[1], command[2]))
+                    elif command[0] == "update":
+                        if commandLen == 1:
+                            if MCSM.GetMCSMInfo() is None:
+                                await send("UUID更新成功")
+                            else:
+                                await send("UUID更新失败")
+                        elif commandLen == 2 and command[1] == "true":
+                            if MCSM.GetMCSMInfo(True) is None:
+                                await send("初始化信息成功")
+                            else:
+                                await send("初始化信息失败")
+                    elif command[0] == "stop":
+                        if commandLen == 2:
+                            await send(MCSM.Stop(command[1]))
+                        elif commandLen == 3:
+                            await send(MCSM.Stop(command[1], command[2]))
+                    elif command[0] == "kill":
+                        if commandLen == 2:
+                            await send(MCSM.Stop(command[1], forceKill=True))
+                        elif commandLen == 3:
+                            await send(MCSM.Stop(command[1], command[2], forceKill=True))
+                    elif command[0] == "start":
+                        if commandLen == 2:
+                            await send(MCSM.Start(command[1])["info"])
+                        elif commandLen == 3:
+                            await send(MCSM.Start(command[1], command[2])["info"])
+                    elif command[0] == "restart":
+                        if commandLen == 2:
+                            await send(MCSM.Restart(command[1]))
+                        elif commandLen == 3:
+                            await send(MCSM.Restart(command[1], command[2]))
+                    elif command[0] == "command":
+                        cmd = ""
+                        for x in range(3, commandLen):
+                            cmd = cmd + command[x] + " "
+                        await send(MCSM.RunCommand(command[1], command[2], cmd))
+
+
+@bot.on(GroupMessage)
+async def Permission(event: GroupMessage):
+    async def send(sendMessage: str) -> None:
+        await message.SendMessage(event.group.id, sendMessage, event.group.name)
+
+    def checkPlayer(permission: str) -> bool:
+        return per.CheckPlayerPermission(str(event.sender.id), permission)
+
+    msg = str(event.message_chain)
+    if msg.startswith('/permission') or msg.startswith('!permission') or msg.startswith('/ps') or msg.startswith('!ps'):
+        command = msg[1:].rsplit(" ")
+        commandLen = len(command)
+        if commandLen == 1:
+            await send(f"Permission模块帮助: \n"
+                       f"/permission player (At | id) add (permission)\n"
+                       f"/permission player (At | id) remove (permission)\n"
+                       f"/permission player (At | id) clone (At | id)\n"
+                       f"/permission player (At | id) check (permission)\n"
+                       f"/permission player (At | id) inherit add (groupName)\n"
+                       f"/permission player (At | id) inherit remove (groupName)\n"
+                       f"/permission player (At | id) del\n"
+                       f"/permission player (At | id) list\n"
+                       f"/permission player (At | id) info\n"
+                       f"/permission group (groupName) add (permission)\n"
+                       f"/permission group (groupName) remove (permission)\n"
+                       f"/permission group (groupName) clone (groupName)\n"
+                       f"/permission group (groupName) check (permission)\n"
+                       f"/permission group (groupName) inherit add (groupName)\n"
+                       f"/permission group (groupName) inherit remove (groupName)\n"
+                       f"/permission group (groupName) del\n"
+                       f"/permission group (groupName) list\n"
+                       f"/permission group (groupName) info\n"
+                       f"/permission reload [true]\n"
+                       f"/permission list [word]")
+        else:
+            if command[1] == "player":
+                if commandLen >= 4:
+                    match len(event.message_chain.get(At)):
+                        case 2:
+                            if command[3] == "clone":
+                                if checkPlayer(per.Permission.Player.Clone):
+                                    temp = event.message_chain.get(At)
+                                    await send(per.ClonePlayerPermission(str(temp[1].target), str(temp[0].target)))
+                                else:
+                                    await send("你无权这么做")
+                        case 1:
+                            match command[3]:
+                                case "add":
+                                    if checkPlayer(per.Permission.Player.Give):
+                                        if commandLen == 5:
+                                            await send(per.AddPlayerPermission(str(event.message_chain.get_first(At).target), command[4]))
+                                        else:
+                                            await send("命令参数不正确")
+                                    else:
+                                        await send("你无权这么做")
+                                case "remove":
+                                    if checkPlayer(per.Permission.Player.Remove):
+                                        if commandLen == 5:
+                                            await send(per.RemovePlayerPermission(str(event.message_chain.get_first(At).target), command[4]))
+                                        else:
+                                            await send("命令参数不正确")
+                                    else:
+                                        await send("你无权这么做")
+                                case "check":
+                                    if checkPlayer(per.Permission.Player.Check):
+                                        if commandLen == 5:
+                                            await send(per.CheckPlayerPermission(str(event.message_chain.get_first(At).target), command[4]))
+                                        else:
+                                            await send("命令参数不正确")
+                                    else:
+                                        await send("你无权这么做")
+                                case "list":
+                                    if checkPlayer(per.Permission.Player.List):
+                                        msg = f"{event.message_chain.get_first(At).target}拥有的权限为：\n"
+                                        for raw in per.GetPlayerPermission(str(event.message_chain.get_first(At).target)):
+                                            msg += f"{raw}\n"
+                                        await send(msg.removesuffix("\n"))
+                                    else:
+                                        await send("你无权这么做")
+                                case "info":
+                                    if checkPlayer(per.Permission.Player.Info):
+                                        data = per.GetPlayerInfo(str(event.message_chain.get_first(At).target))
+                                        if data is None:
+                                            await send("未查询到权限记录")
+                                        else:
+                                            msg = f"{event.message_chain.get_first(At).target}的信息如下:\n"
+                                            if "group" in data.keys():
+                                                temp = "权限组: \n"
+                                                for raw in data["group"]:
+                                                    temp += f"{raw}\n"
+                                                msg += temp
+                                            if "permission" in data.keys():
+                                                temp = "权限: \n"
+                                                for raw in data["permission"]:
+                                                    temp += f"{raw}\n"
+                                                msg += temp
+                                            await send(msg.removesuffix("\n"))
+                                    else:
+                                        await send("你无权这么做")
+                                case "inherit":
+                                    if commandLen == 6:
+                                        match command[4]:
+                                            case "add":
+                                                if checkPlayer(per.Permission.Player.Inherit.Add):
+                                                    await send(per.AddPlayerParent(str(event.message_chain.get_first(At).target), command[5]))
+                                                else:
+                                                    await send("你无权这么做")
+                                            case "remove":
+                                                if checkPlayer(per.Permission.Player.Inherit.Del):
+                                                    await send(per.RemovePlayerParent(str(event.message_chain.get_first(At).target), command[5]))
+                                                else:
+                                                    await send("你无权这么做")
+                                    else:
+                                        await send("命令参数不正确")
+                        case 0:
+                            match command[3]:
+                                case "add":
+                                    if checkPlayer(per.Permission.Player.Give):
+                                        if commandLen == 5:
+                                            await send(per.AddPlayerPermission(command[2], command[4]))
+                                        else:
+                                            await send("命令参数错误")
+                                    else:
+                                        await send("你无权这么做")
+                                case "remove":
+                                    if checkPlayer(per.Permission.Player.Remove):
+                                        if commandLen == 5:
+                                            await send(per.RemovePlayerPermission(command[2], command[4]))
+                                        else:
+                                            await send("命令参数错误")
+                                    else:
+                                        await send("你无权这么做")
+                                case "check":
+                                    if checkPlayer(per.Permission.Player.Check):
+                                        if commandLen == 5:
+                                            await send(per.CheckPlayerPermission(command[2], command[4]))
+                                        else:
+                                            await send("命令参数错误")
+                                    else:
+                                        await send("你无权这么做")
+                                case "clone":
+                                    if checkPlayer(per.Permission.Player.Clone):
+                                        if commandLen == 5:
+                                            await send(per.ClonePlayerPermission(command[2], command[4]))
+                                        else:
+                                            await send("命令参数错误")
+                                    else:
+                                        await send("你无权这么做")
+                                case "list":
+                                    if checkPlayer(per.Permission.Player.List):
+                                        msg = f"{command[2]}拥有的权限为：\n"
+                                        for raw in per.GetPlayerPermission(command[2]):
+                                            msg += f"{raw}\n"
+                                        await send(msg.removesuffix("\n"))
+                                    else:
+                                        await send("你无权这么做")
+                                case "info":
+                                    if checkPlayer(per.Permission.Player.Info):
+                                        data = per.GetPlayerInfo(command[2])
+                                        if data is None:
+                                            await send("未查询到权限记录")
+                                        else:
+                                            msg = f"{command[2]}的信息如下:\n"
+                                            if "group" in data.keys():
+                                                temp = "权限组: \n"
+                                                for raw in data["group"]:
+                                                    temp += f"{raw}\n"
+                                                msg += temp
+                                            if "permission" in data.keys():
+                                                temp = "权限: \n"
+                                                for raw in data["permission"]:
+                                                    temp += f"{raw}\n"
+                                                msg += temp
+                                            await send(msg.removesuffix("\n"))
+                                    else:
+                                        await send("你无权这么做")
+                                case "inherit":
+                                    if commandLen == 6:
+                                        match command[4]:
+                                            case "add":
+                                                if checkPlayer(per.Permission.Player.Inherit.Add):
+                                                    await send(per.AddPlayerParent(command[2], command[5]))
+                                                else:
+                                                    await send("你无权这么做")
+                                            case "remove":
+                                                if checkPlayer(per.Permission.Player.Inherit.Del):
+                                                    await send(per.RemovePlayerParent(command[2], command[5]))
+                                                else:
+                                                    await send("你无权这么做")
+                                    else:
+                                        await send("命令参数不正确")
+                else:
+                    await send("命令缺少参数")
+            elif command[1] == "group":
+                if commandLen >= 4:
+                    match command[3]:
+                        case "add":
+                            if checkPlayer(per.Permission.Group.Give):
+                                if commandLen == 5:
+                                    await send(per.AddGroupPermission(command[2]))
+                                else:
+                                    await send("命令参数错误")
+                            else:
+                                await send("你无权这么做")
+                        case "remove":
+                            if checkPlayer(per.Permission.Group.Del):
+                                if commandLen == 5:
+                                    await send(per.ReloadGroupPermission(command[2]))
+                                else:
+                                    await send("命令参数错误")
+                            else:
+                                await send("你无权这么做")
+                        case "check":
+                            if checkPlayer(per.Permission.Group.Check):
+                                if commandLen == 5:
+                                    await send(per.CheckGroupPermission(command[2]))
+                                else:
+                                    await send("命令参数错误")
+                            else:
+                                await send("你无权这么做")
+                        case "clone":
+                            if checkPlayer(per.Permission.Group.Clone):
+                                if commandLen == 5:
+                                    await send(per.CloneGroupPermission(command[2], command[4]))
+                                else:
+                                    await send("命令参数错误")
+                            else:
+                                await send("你无权这么做")
+                        case "list":
+                            if checkPlayer(per.Permission.Group.List):
+                                msg = f"{command[2]}拥有的权限为：\n"
+                                for raw in per.GetGroupPermission(command[2]):
+                                    msg += f"{raw}\n"
+                                await send(msg.removesuffix("\n"))
+                            else:
+                                await send("你无权这么做")
+                        case "info":
+                            if checkPlayer(per.Permission.Group.Info):
+                                data = per.GetGroupInfo(command[2])
+                                if data is None:
+                                    await send("此权限组不存在")
+                                else:
+                                    msg = f"{command[2]}的信息如下:\n"
+                                    if "parent" in data.keys():
+                                        temp = "权限组: \n"
+                                        for raw in data["parent"]:
+                                            temp += f"{raw}\n"
+                                        msg += temp
+                                    if "permission" in data.keys():
+                                        temp = "权限: \n"
+                                        for raw in data["permission"]:
+                                            temp += f"{raw}\n"
+                                        msg += temp
+                                    await send(msg)
+                            else:
+                                await send("你无权这么做")
+                        case "inherit":
+                            if commandLen == 6:
+                                match command[4]:
+                                    case "add":
+                                        if checkPlayer(per.Permission.Group.Inherit.Add):
+                                            await send(per.AddGroupParent(command[2], command[5]))
+                                        else:
+                                            await send("你无权这么做")
+                                    case "remove":
+                                        if checkPlayer(per.Permission.Group.Inherit.Del):
+                                            await send(per.RemoveGroupParent(command[2], command[5]))
+                                        else:
+                                            await send("你无权这么做")
+                            else:
+                                await send("命令参数不正确")
+            elif command[1] == "list":
+                if checkPlayer(per.Permission.List):
+                    if commandLen == 2:
+                        data = per.GetPermissionNode()
+                        msg = "所有权限节点: \n"
+                        for raw in data:
+                            msg += f"{raw}\n"
+                    elif commandLen == 3:
+                        data = per.GetPermissionNode()
+                        msg = f"{command[2]}权限节点: \n"
+                        for raw in data:
+                            if command[2] in raw:
+                                msg += f"{raw}\n"
+                        await Segmentation(send, msg)
+                else:
+                    await send("你无权这么做")
+            elif command[1] == "reload":
+                if commandLen == 2:
+                    if checkPlayer(per.Permission.Group.Reload.Common):
+                        await send(per.ReloadGroupPermission())
+                    else:
+                        await send("你无权这么做")
+                elif commandLen == 3 and command[2] == "true":
+                    if checkPlayer(per.Permission.Group.Reload.Force):
+                        await send(per.ReloadGroupPermission(True))
+                    else:
+                        await send("你无权这么做")
+
 
 @bot.on(Startup)
 async def Startup(event: Startup):
@@ -245,12 +647,13 @@ async def Startup(event: Startup):
 
 @bot.on(Shutdown)
 async def Shutdown(event: Shutdown):
-    database.Disconnect()  # 关闭前断开数据库连接
+    connected.close()
 
 
 @bot.on(MemberJoinEvent)
 async def WelcomeMessage(event: MemberJoinEvent):
-    await message.SendWelcomeMessage(event.member.id, event.member.member_name, event.member.group.id, event.member.group.name)
+    await message.SendWelcomeMessage(event.member.id, event.member.member_name, event.member.group.id,
+                                     event.member.group.name)
 
 
 @bot.on(GroupMessage)

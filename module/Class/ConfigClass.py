@@ -77,6 +77,10 @@ class AutomaticReview:
     Refuse: bool
     BlackList: bool
 
+class MCSMConfig:
+    apikey: str
+    apiurl: str
+
 class ConfigInit:
     ConfigVersion: float
     infoLimit: int
@@ -88,6 +92,7 @@ class ConfigInit:
     AutomaticReview: AutomaticReview
     UpdateCheckInterval: int
     WelcomeMessage: str
+    MCSMConfig: MCSMConfig
 
     def __init__(self, json):
         self.__dict__ = json
@@ -135,6 +140,7 @@ class ModuleConfigInit:
     Online: bool
     AutomaticReview: bool
     DebugMode: bool
+    MCSMModule: bool
     CheckMCUpdate: bool
 
     def __init__(self, json):
