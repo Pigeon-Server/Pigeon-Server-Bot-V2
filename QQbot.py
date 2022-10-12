@@ -73,6 +73,8 @@ if ModuleConfig.Questions:
 
     @Filter(GroupMessage)
     def AnswerJudge(event: GroupMessage):
+        if not per.CheckPlayerPermission(event.sender.id, per.Question.GetAnswer):
+            return None
         if ModuleConfig.Shutup:  # 如果排除列表启用，则排除
             if event.sender.id in ExceptList.Data:
                 return None
@@ -105,12 +107,15 @@ if ModuleConfig.Shutup and ModuleConfig.Questions:
     @control.on(ShutupSpy)
     async def Shutup(event: GroupMessage, execute: bool):
         if execute:
-            if event.sender.id in ExceptList.Data:
-                ExceptList.EditData(event.sender.id, delData=True)
-                await message.SendMessage(event.group.id, "坏了，我嘴闭不上了", groupName=event.group.name)
+            if per.CheckPlayerPermission(event.sender.id, per.Question.Shutup):
+                if event.sender.id in ExceptList.Data:
+                    ExceptList.EditData(event.sender.id, delData=True)
+                    await message.SendMessage(event.group.id, "坏了，我嘴闭不上了", groupName=event.group.name)
+                else:
+                    ExceptList.EditData(event.sender.id)
+                    await message.SendMessage(event.group.id, "好了，我闭嘴了", groupName=event.group.name)
             else:
-                ExceptList.EditData(event.sender.id)
-                await message.SendMessage(event.group.id, "好了，我闭嘴了", groupName=event.group.name)
+                await message.SendMessage(event.group.id, "你无权这么做", groupName=event.group.name)
 
 # 是否开启在线人数查询
 if ModuleConfig.Online:
@@ -257,12 +262,16 @@ if ModuleConfig.MCSMModule:
     async def CheckStatus():
         while True:
             Thread(target=MCSM.UpdateInstanceStatus).start()
-            await sleep(30)
+            await sleep(MainConfig.MCSMConfig.updateTime)
 
     @bot.on(GroupMessage)
     async def MCSMCommand(event: GroupMessage):
         async def send(sendMessage: str) -> None:
             await message.SendMessage(event.group.id, sendMessage, event.group.name)
+
+        def checkPlayer(permission: str) -> bool:
+            return per.CheckPlayerPermission(str(event.sender.id), permission)
+
         msg = str(event.message_chain)
         if msg.startswith('/mcsm') or msg.startswith('!mcsm'):
             command = msg[6:].rsplit(" ")
@@ -278,57 +287,87 @@ if ModuleConfig.MCSMModule:
                            "/mcsm start (InstanceName) [ServerName] 开启某一实例\n"
                            "/mcsm restart (InstanceName) [ServerName] 重启某一实例\n"
                            "/mcsm command (InstanceName) (ServerName) (Command) 向某一实例执行命令")
-            elif event.sender.id == 1483073537:
-                if commandLen >= 1:
-                    if command[0] == "check":
-                        if commandLen == 2:
-                            await send(MCSM.CheckInstanceStatus(command[1]))
-                        elif commandLen == 3:
-                            await send(MCSM.CheckInstanceStatus(command[1], command[2]))
-                    elif command[0] == "list":
+            elif commandLen >= 1:
+                match command[0]:
+                    case "check":
+                        if checkPlayer(per.Mcsm.Check):
+                            if commandLen == 2:
+                                await send(MCSM.CheckInstanceStatus(command[1]))
+                            elif commandLen == 3:
+                                await send(MCSM.CheckInstanceStatus(command[1], command[2]))
+                        else:
+                            await send("你无权这么做")
+                    case "list":
+                        if checkPlayer(per.Mcsm.List):
+                            if commandLen == 1:
+                                await send(MCSM.ListInstance())
+                            elif commandLen == 2:
+                                await send(MCSM.ListInstance(command[1]))
+                        else:
+                            await send("你无权这么做")
+                    case "rename":
+                        if checkPlayer(per.Mcsm.Rename):
+                            if commandLen == 3:
+                                await send(MCSM.ReName(command[1], command[2]))
+                        else:
+                            await send("你无权这么做")
+                    case "update":
                         if commandLen == 1:
-                            await send(MCSM.ListInstance())
-                        elif commandLen == 2:
-                            await send(MCSM.ListInstance(command[1]))
-                    elif command[0] == "rename":
-                        if commandLen == 3:
-                            await send(MCSM.ReName(command[1], command[2]))
-                    elif command[0] == "update":
-                        if commandLen == 1:
-                            if MCSM.GetMCSMInfo() is None:
-                                await send("UUID更新成功")
+                            if checkPlayer(per.Mcsm.Update.Common):
+                                if MCSM.GetMCSMInfo() is None:
+                                    await send("UUID更新成功")
+                                else:
+                                    await send("UUID更新失败")
                             else:
-                                await send("UUID更新失败")
+                                await send("你无权这么做")
                         elif commandLen == 2 and command[1] == "true":
-                            if MCSM.GetMCSMInfo(True) is None:
-                                await send("初始化信息成功")
+                            if checkPlayer(per.Mcsm.Update.Force):
+                                if MCSM.GetMCSMInfo(True) is None:
+                                    await send("初始化信息成功")
+                                else:
+                                    await send("初始化信息失败")
                             else:
-                                await send("初始化信息失败")
-                    elif command[0] == "stop":
-                        if commandLen == 2:
-                            await send(MCSM.Stop(command[1]))
-                        elif commandLen == 3:
-                            await send(MCSM.Stop(command[1], command[2]))
-                    elif command[0] == "kill":
-                        if commandLen == 2:
-                            await send(MCSM.Stop(command[1], forceKill=True))
-                        elif commandLen == 3:
-                            await send(MCSM.Stop(command[1], command[2], forceKill=True))
-                    elif command[0] == "start":
-                        if commandLen == 2:
-                            await send(MCSM.Start(command[1])["info"])
-                        elif commandLen == 3:
-                            await send(MCSM.Start(command[1], command[2])["info"])
-                    elif command[0] == "restart":
-                        if commandLen == 2:
-                            await send(MCSM.Restart(command[1]))
-                        elif commandLen == 3:
-                            await send(MCSM.Restart(command[1], command[2]))
-                    elif command[0] == "command":
-                        cmd = ""
-                        for x in range(3, commandLen):
-                            cmd = cmd + command[x] + " "
-                        await send(MCSM.RunCommand(command[1], command[2], cmd))
+                                await send("你无权这么做")
+                    case "stop":
+                        if checkPlayer(per.Mcsm.Stop):
+                            if commandLen == 2:
+                                await send(MCSM.Stop(command[1]))
+                            elif commandLen == 3:
+                                await send(MCSM.Stop(command[1], command[2]))
+                        else:
+                            await send("你无权这么做")
+                    case "kill":
+                        if checkPlayer(per.Mcsm.Kill):
+                            if commandLen == 2:
+                                await send(MCSM.Stop(command[1], forceKill=True))
+                            elif commandLen == 3:
+                                await send(MCSM.Stop(command[1], command[2], forceKill=True))
+                        else:
+                            await send("你无权这么做")
+                    case "start":
+                        if checkPlayer(per.Mcsm.Start):
+                            if commandLen == 2:
+                                await send(MCSM.Start(command[1])["info"])
+                            elif commandLen == 3:
+                                await send(MCSM.Start(command[1], command[2])["info"])
+                        else:
+                            await send("你无权这么做")
+                    case "restart":
+                        if checkPlayer(per.Mcsm.Restart):
+                            if commandLen == 2:
+                                await send(MCSM.Restart(command[1]))
+                            elif commandLen == 3:
+                                await send(MCSM.Restart(command[1], command[2]))
+                        else:
+                            await send("你无权这么做")
+                    case "command":
+                        if checkPlayer(per.Mcsm.Command):
+                            cmd = ""
+                            for x in range(3, commandLen):
+                                cmd = cmd + command[x] + " "
+                            await send(MCSM.RunCommand(command[1], command[2], cmd))
+                        else:
+                            await send("你无权这么做")
 
 
 @bot.on(GroupMessage)
@@ -351,9 +390,11 @@ async def Permission(event: GroupMessage):
                        f"/permission player (At | id) check (permission)\n"
                        f"/permission player (At | id) inherit add (groupName)\n"
                        f"/permission player (At | id) inherit remove (groupName)\n"
+                       f"/permission player (At | id) inherit set (groupName)\n"
                        f"/permission player (At | id) del\n"
                        f"/permission player (At | id) list\n"
                        f"/permission player (At | id) info\n"
+                       f"/permission player (At | id) create [groupName]\n"
                        f"/permission group (groupName) add (permission)\n"
                        f"/permission group (groupName) remove (permission)\n"
                        f"/permission group (groupName) clone (groupName)\n"
@@ -363,6 +404,7 @@ async def Permission(event: GroupMessage):
                        f"/permission group (groupName) del\n"
                        f"/permission group (groupName) list\n"
                        f"/permission group (groupName) info\n"
+                       f"/permission group (groupName) create\n"
                        f"/permission reload [true]\n"
                        f"/permission list [word]")
         else:
@@ -430,8 +472,18 @@ async def Permission(event: GroupMessage):
                                             await send(msg.removesuffix("\n"))
                                     else:
                                         await send("你无权这么做")
+                                case "create":
+                                    if checkPlayer(per.Permission.Player.Create):
+                                        if commandLen == 4:
+                                            await send(per.CreatPlayer(str(event.message_chain.get_first(At).target)))
+                                        elif commandLen == 5:
+                                            await send(per.CreatPlayer(str(event.message_chain.get_first(At).target), command[4]))
+                                        else:
+                                            await send("命令参数不正确")
+                                    else:
+                                        await send("你无权这么做")
                                 case "inherit":
-                                    if commandLen == 6:
+                                    if commandLen >= 6:
                                         match command[4]:
                                             case "add":
                                                 if checkPlayer(per.Permission.Player.Inherit.Add):
@@ -441,6 +493,17 @@ async def Permission(event: GroupMessage):
                                             case "remove":
                                                 if checkPlayer(per.Permission.Player.Inherit.Del):
                                                     await send(per.RemovePlayerParent(str(event.message_chain.get_first(At).target), command[5]))
+                                                else:
+                                                    await send("你无权这么做")
+                                            case "set":
+                                                if checkPlayer(per.Permission.Player.Inherit.Set):
+                                                    if commandLen == 6:
+                                                        await send(per.SetPlayerGroup(str(event.message_chain.get_first(At).target), command[5]))
+                                                    elif commandLen > 6:
+                                                        temp = []
+                                                        for x in range(6, commandLen):
+                                                            temp += x
+                                                        await send(per.SetPlayerGroup(str(event.message_chain.get_first(At).target), temp))
                                                 else:
                                                     await send("你无权这么做")
                                     else:
@@ -507,8 +570,18 @@ async def Permission(event: GroupMessage):
                                             await send(msg.removesuffix("\n"))
                                     else:
                                         await send("你无权这么做")
+                                case "create":
+                                    if checkPlayer(per.Permission.Player.Create):
+                                        if commandLen == 4:
+                                            await send(per.CreatPlayer(command[3]))
+                                        elif commandLen == 5:
+                                            await send(per.CreatPlayer(command[3], command[4]))
+                                        else:
+                                            await send("命令参数不正确")
+                                    else:
+                                        await send("你无权这么做")
                                 case "inherit":
-                                    if commandLen == 6:
+                                    if commandLen >= 6:
                                         match command[4]:
                                             case "add":
                                                 if checkPlayer(per.Permission.Player.Inherit.Add):
@@ -518,6 +591,17 @@ async def Permission(event: GroupMessage):
                                             case "remove":
                                                 if checkPlayer(per.Permission.Player.Inherit.Del):
                                                     await send(per.RemovePlayerParent(command[2], command[5]))
+                                                else:
+                                                    await send("你无权这么做")
+                                            case "set":
+                                                if checkPlayer(per.Permission.Player.Inherit.Set):
+                                                    if commandLen == 6:
+                                                        await send(per.SetPlayerGroup(command[2], command[5]))
+                                                    elif commandLen > 6:
+                                                        temp = []
+                                                        for x in range(6, commandLen):
+                                                            temp += x
+                                                        await send(per.SetPlayerGroup(command[2], temp))
                                                 else:
                                                     await send("你无权这么做")
                                     else:
@@ -585,6 +669,14 @@ async def Permission(event: GroupMessage):
                                             temp += f"{raw}\n"
                                         msg += temp
                                     await send(msg)
+                            else:
+                                await send("你无权这么做")
+                        case "create":
+                            if checkPlayer(per.Permission.Group.Create):
+                                if commandLen == 4:
+                                    await send(per.CreatGroup(command[3]))
+                                else:
+                                    await send("命令参数不正确")
                             else:
                                 await send("你无权这么做")
                         case "inherit":
@@ -663,149 +755,177 @@ async def MessageRecord(event: GroupMessage):
 
 
 @Filter(GroupMessage)
-def PlayerGroupCommandParsing(event: GroupMessage):
+def CommandParsing(event: GroupMessage):
     msg = str(event.message_chain)
-    if (msg.startswith('/') or msg.startswith('!')) and IsPlayerGroup(event.group.id):
+    if msg.startswith('/') or msg.startswith('!'):
         return msg[1:].rsplit(" ")
 
 
-@Filter(GroupMessage)
-def AdminGroupCommandParsing(event: GroupMessage):
-    msg = str(event.message_chain)
-    if (msg.startswith('/') or msg.startswith('!')) and IsAdminGroup(event.group.id):
-        return msg[1:].rsplit(" ")
-
-
-@control.on(PlayerGroupCommandParsing)
-async def PlayerCommand(event: GroupMessage, command: str):
+@control.on(CommandParsing)
+async def CommandSpy(event: GroupMessage, command: list):
     commandLen = len(command)
     targetMessage = event.message_chain.message_id
+    per.CreatPlayer(event.sender.id, MainConfig.Permission.default if IsPlayerGroup(event.group.id) else MainConfig.Permission.common)
     if commandLen > 0:
-        if ModuleConfig.WhiteList and (command[0] == "apply" or command[0] == "白名单"):
-            match commandLen:
-                case 1:
-                    await message.PlayerMessage("缺少必要参数Token", targetMessage=targetMessage)
-                case 2:
-                    token = command[1]
-                    tokenLen = len(command[1])
-                    if tokenLen > 16:
-                        await message.PlayerMessage("Token过长", targetMessage=targetMessage)
-                    elif tokenLen < 16:
-                        await message.PlayerMessage("Token过短", targetMessage=targetMessage)
-                    else:
-                        if rematch('^[A-Z]+$', token) is None:
-                            await message.PlayerMessage("Token应为十六位大写字母", targetMessage=targetMessage)
+        if ModuleConfig.WhiteList and IsPlayerGroup(event.group.id):
+            if command[0] == "apply" or command[0] == "白名单":
+                if per.CheckPlayerPermission(event.sender.id, per.Whitelist.Apply):
+                    match commandLen:
+                        case 1:
+                            await message.PlayerMessage("缺少必要参数Token", targetMessage=targetMessage)
+                        case 2:
+                            token = command[1]
+                            tokenLen = len(command[1])
+                            if tokenLen > 16:
+                                await message.PlayerMessage("Token过长", targetMessage=targetMessage)
+                            elif tokenLen < 16:
+                                await message.PlayerMessage("Token过短", targetMessage=targetMessage)
+                            else:
+                                if rematch('^[A-Z]+$', token) is None:
+                                    await message.PlayerMessage("Token应为十六位大写字母", targetMessage=targetMessage)
+                                else:
+                                    await whitelist.GetWhiteList(targetMessage, token, str(event.sender.id))
+                else:
+                    await message.PlayerMessage("你无权这么做")
+            elif command[0] == "change" or command[0] == "改名":
+                if per.CheckPlayerPermission(event.sender.id, per.Whitelist.Change):
+                    if commandLen == 2:
+                        if rematch('^\\w+$', command[1]) is None or len(command[1]) < 4 or len(command[1]) > 16:
+                            await message.PlayerMessage("非法玩家名", targetMessage=targetMessage)
                         else:
-                            await whitelist.GetWhiteList(targetMessage, token, str(event.sender.id))
-        elif ModuleConfig.BlackList and (command[0] == "blacklist" or command[0] == "黑名单"):
-            if commandLen == 1:
-                PingDataBase()
-                number = cursor.execute("select * from blacklist")
-                if number == 0:
-                    await message.PlayerMessage("未查询到黑名单玩家", targetMessage=targetMessage)
+                            await whitelist.ChangeName(command[1], event.sender.id)
                 else:
-                    tempMessage = ""
-                    data = cursor.fetchall()
-                    for raw in data:
-                        tempMessage += f"序号：{raw[0]}\n玩家名：{raw[2]}\n理由:{raw[6]}\n"
-                    await Segmentation(message.PlayerMessage, tempMessage)
-            elif commandLen == 2:
-                if rematch('^\\w+$', command[1]) is None or len(command[1]) < 4 or len(command[1]) > 16:
-                    await message.PlayerMessage("非法玩家名", targetMessage=targetMessage)
-                else:
+                    await message.PlayerMessage("你无权这么做")
+            elif command[0] == "token":
+                if per.CheckPlayerPermission(event.sender.id, per.Token.Check):
                     PingDataBase()
-                    if cursor.execute(f"select * from blacklist where PlayerName = '{command[1]}'"):
-                        await message.PlayerMessage("该玩家已被封禁", targetMessage=targetMessage)
-                    else:
-                        await message.PlayerMessage("该玩家未被封禁", targetMessage=targetMessage)
-        elif ModuleConfig.WhiteList and (command[0] == "change" or command[0] == "改名"):
-            if commandLen == 2:
-                if rematch('^\\w+$', command[1]) is None or len(command[1]) < 4 or len(command[1]) > 16:
-                    await message.PlayerMessage("非法玩家名", targetMessage=targetMessage)
+                    if cursor.execute(f"select * from wait where account = {event.sender.id}"):
+                        data = cursor.fetchone()
+                        await message.PlayerMessage(f"你的token为:\n"
+                                                    f"{data[12]}", targetMessage=targetMessage)
                 else:
-                    await whitelist.ChangeName(command[1], event.sender.id)
-        elif command[0] == "token":
-            PingDataBase()
-            if cursor.execute(f"select * from wait where account = {event.sender.id}"):
-                data = cursor.fetchone()
-                await message.PlayerMessage(f"你的token为:\n"
-                                            f"{data[12]}", targetMessage=targetMessage)
-
-
-@control.on(AdminGroupCommandParsing)
-async def AdminCommand(event: GroupMessage, command: str):
-    commandLen = len(command)
-    if commandLen > 0:
-        if ModuleConfig.WhiteList and (command[0] == "pass" or command[0] == "通过"):
-            match commandLen:
-                case 1:
-                    await message.AdminMessage("命令缺少参数")
-                case 2:
-                    await whitelist.PassOne(command[1])
-        elif ModuleConfig.WhiteList and (command[0] == "refuse" or command[0] == "拒绝"):
-            match commandLen:
-                case 1:
-                    await message.AdminMessage("命令缺少参数")
-                case 3:
-                    await whitelist.RefuseOne(command[1])
-                case 4:
-                    await whitelist.RefuseOne(command[1], command[2])
-        elif ModuleConfig.BlackList and (command[0] == "ban" or command[0] == "封禁"):
-            if commandLen < 2:
-                await message.AdminMessage("缺少参数")
-            elif rematch('^\\w+$', command[1]) is None or len(command[1]) < 4 or len(command[1]) > 16:
-                await message.AdminMessage("非法玩家名")
-            else:
-                match commandLen:
-                    case 2:
-                        await blacklist.AddBlackList(command[1])
-                    case 3:
-                        await blacklist.AddBlackList(command[1], command[2])
-        elif ModuleConfig.BlackList and (command[0] == "unban" or command[0] == "解封"):
-            if commandLen < 2:
-                await message.AdminMessage("缺少参数")
-            elif rematch('^\\w+$', command[1]) is None or len(command[1]) < 4 or len(command[1]) > 16:
-                await message.AdminMessage("非法玩家名")
-            else:
-                if commandLen == 2:
-                    await blacklist.DelBlackList(command[1])
-        elif command[0] == "list" or command[0] == "查询":
-            if commandLen == 2:
-                if command[1] == "wait" or command[1] == "待审核":
-                    await Segmentation(message.AdminMessage, query.WaitList())
-        elif command[0] == "lock" or command[0] == "锁定":
-            if commandLen == 2:
-                PingDataBase()
-                if cursor.execute(f"SELECT * from wait where token = '{command[1]}'"):
-                    data = cursor.fetchone()
-                    if not data[16]:
-                        try:
-                            cursor.execute(f"UPDATE wait SET locked = 1 where token = '{command[1]}'")
-                            await message.AdminMessage("锁定token成功")
-                        except:
-                            await message.AdminMessage("锁定token失败")
-                    else:
-                        await message.AdminMessage("此token已被上锁")
+                    await message.PlayerMessage("你无权这么做")
+            elif command[0] == "pass" or command[0] == "通过":
+                if per.CheckPlayerPermission(event.sender.id, per.Whitelist.Agree):
+                    match commandLen:
+                        case 1:
+                            await message.AdminMessage("命令缺少参数")
+                        case 2:
+                            await whitelist.PassOne(command[1])
                 else:
-                    await message.AdminMessage("无法找到此Token，请确认Token是否正确")
-        elif command[0] == "unlock" or command[0] == "解锁":
-            if commandLen == 2:
-                PingDataBase()
-                if cursor.execute(f"SELECT * from wait where token = '{command[1]}'"):
-                    data = cursor.fetchone()
-                    if data[16]:
-                        try:
-                            cursor.execute(f"UPDATE wait SET locked = 0 where token = '{command[1]}'")
-                            await message.AdminMessage("解锁成功")
-                        except:
-                            await message.AdminMessage("解锁失败")
-                    else:
-                        await message.AdminMessage("此token未被上锁")
+                    await message.PlayerMessage("你无权这么做")
+            elif command[0] == "refuse" or command[0] == "拒绝":
+                if per.CheckPlayerPermission(event.sender.id, per.Whitelist.Refuse):
+                    match commandLen:
+                        case 1:
+                            await message.AdminMessage("命令缺少参数")
+                        case 3:
+                            await whitelist.RefuseOne(command[1])
+                        case 4:
+                            await whitelist.RefuseOne(command[1], command[2])
                 else:
-                    await message.AdminMessage("无法找到此Token，请确认Token是否正确")
-        elif ModuleConfig.WhiteList and (command[0] == "passall" or command[0] == "全部通过"):
-            if commandLen == 1:
-                await whitelist.PassAll()
-
+                    await message.PlayerMessage("你无权这么做")
+            elif command[0] == "list" or command[0] == "查询":
+                if per.CheckPlayerPermission(event.sender.id, per.Whitelist.List.Wait):
+                    if commandLen == 2:
+                        if command[1] == "wait" or command[1] == "待审核":
+                            await Segmentation(message.AdminMessage, query.WaitList())
+                else:
+                    await message.PlayerMessage("你无权这么做")
+            elif command[0] == "lock" or command[0] == "锁定":
+                if per.CheckPlayerPermission(event.sender.id, per.Token.Lock):
+                    if commandLen == 2:
+                        PingDataBase()
+                        if cursor.execute(f"SELECT * from wait where token = '{command[1]}'"):
+                            data = cursor.fetchone()
+                            if not data[16]:
+                                try:
+                                    cursor.execute(f"UPDATE wait SET locked = 1 where token = '{command[1]}'")
+                                    await message.AdminMessage("锁定token成功")
+                                except:
+                                    await message.AdminMessage("锁定token失败")
+                            else:
+                                await message.AdminMessage("此token已被上锁")
+                        else:
+                            await message.AdminMessage("无法找到此Token，请确认Token是否正确")
+                else:
+                    await message.PlayerMessage("你无权这么做")
+            elif command[0] == "unlock" or command[0] == "解锁":
+                if per.CheckPlayerPermission(event.sender.id, per.Token.Unlock):
+                    if commandLen == 2:
+                        PingDataBase()
+                        if cursor.execute(f"SELECT * from wait where token = '{command[1]}'"):
+                            data = cursor.fetchone()
+                            if data[16]:
+                                try:
+                                    cursor.execute(f"UPDATE wait SET locked = 0 where token = '{command[1]}'")
+                                    await message.AdminMessage("解锁成功")
+                                except:
+                                    await message.AdminMessage("解锁失败")
+                            else:
+                                await message.AdminMessage("此token未被上锁")
+                        else:
+                            await message.AdminMessage("无法找到此Token，请确认Token是否正确")
+                else:
+                    await message.PlayerMessage("你无权这么做")
+            elif command[0] == "passall" or command[0] == "全部通过":
+                if per.CheckPlayerPermission(event.sender.id, per.Whitelist.AgreeALL):
+                    if commandLen == 1:
+                        await whitelist.PassAll()
+                else:
+                    await message.PlayerMessage("你无权这么做")
+        elif ModuleConfig.BlackList:
+            if command[0] == "blacklist" or command[0] == "黑名单":
+                if commandLen == 1:
+                    if per.CheckPlayerPermission(event.sender.id, per.Blacklist.List):
+                        PingDataBase()
+                        number = cursor.execute("select * from blacklist")
+                        if number == 0:
+                            await message.PlayerMessage("未查询到黑名单玩家", targetMessage=targetMessage)
+                        else:
+                            tempMessage = ""
+                            data = cursor.fetchall()
+                            for raw in data:
+                                tempMessage += f"序号：{raw[0]}\n玩家名：{raw[2]}\n理由:{raw[6]}\n"
+                            await Segmentation(message.PlayerMessage, tempMessage)
+                    else:
+                        await message.PlayerMessage("你无权这么做")
+                elif commandLen == 2:
+                    if per.CheckPlayerPermission(event.sender.id, per.Blacklist.Check):
+                        if rematch('^\\w+$', command[1]) is None or len(command[1]) < 4 or len(command[1]) > 16:
+                            await message.PlayerMessage("非法玩家名", targetMessage=targetMessage)
+                        else:
+                            PingDataBase()
+                            if cursor.execute(f"select * from blacklist where PlayerName = '{command[1]}'"):
+                                await message.PlayerMessage("该玩家已被封禁", targetMessage=targetMessage)
+                            else:
+                                await message.PlayerMessage("该玩家未被封禁", targetMessage=targetMessage)
+                    else:
+                        await message.PlayerMessage("你无权这么做")
+                elif command[0] == "ban" or command[0] == "封禁":
+                    if per.CheckPlayerPermission(event.sender.id, per.Blacklist.Add):
+                        if commandLen < 2:
+                            await message.AdminMessage("缺少参数")
+                        elif rematch('^\\w+$', command[1]) is None or len(command[1]) < 4 or len(command[1]) > 16:
+                            await message.AdminMessage("非法玩家名")
+                        else:
+                            match commandLen:
+                                case 2:
+                                    await blacklist.AddBlackList(command[1])
+                                case 3:
+                                    await blacklist.AddBlackList(command[1], command[2])
+                    else:
+                        await message.PlayerMessage("你无权这么做")
+                elif command[0] == "unban" or command[0] == "解封":
+                    if per.CheckPlayerPermission(event.sender.id, per.Blacklist.Remove):
+                        if commandLen < 2:
+                            await message.AdminMessage("缺少参数")
+                        elif rematch('^\\w+$', command[1]) is None or len(command[1]) < 4 or len(command[1]) > 16:
+                            await message.AdminMessage("非法玩家名")
+                        else:
+                            if commandLen == 2:
+                                await blacklist.DelBlackList(command[1])
+                    else:
+                        await message.PlayerMessage("你无权这么做")
 
 bot.run(port=MainConfig.MiraiBotConfig.WebSocketPort)

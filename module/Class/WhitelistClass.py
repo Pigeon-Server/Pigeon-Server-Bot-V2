@@ -7,6 +7,9 @@ from module.Interlining.UsefulTools import IsAtBot, IsAdminGroup, IsPlayerGroup
 from mirai.models.message import Plain
 from module.Class.ServerClass import MinecraftServer
 from module.Interlining.UsefulTools import PingDataBase, JudgeToken, Segmentation
+from module.BasicModule.Permission import per
+from module.BasicModule.Config import MainConfig
+
 
 class WhitelistClass:
 
@@ -48,6 +51,8 @@ class WhitelistClass:
                         "name": data[2],
                         "status": False
                     }
+            else:
+                per.SetPlayerGroup(data[1], MainConfig.Permission.common)
 
     async def RefuseOne(self, id: str, reason: str = None) -> None:
         PingDataBase()

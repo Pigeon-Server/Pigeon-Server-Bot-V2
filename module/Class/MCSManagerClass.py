@@ -280,25 +280,30 @@ class MCSMClass(JsonDataBaseCLass):
                 return "实例已在运行"
 
     def StopInstance(self, remoteUUID: str, instanceUUID: str, forceKILL: bool = False) -> str:
-        match self.GetInstanceInfo(remoteUUID, instanceUUID):
-            case -1:
-                return "实例状态未知，无法关闭"
-            case 0:
-                return "实例已停止，无法关闭"
-            case 1:
-                return "实例正在停止，无法关闭"
-            case 2:
-                return "实例正在启动中，无法关闭"
-            case 3:
-                if forceKILL:
-                    try:
-                        self.CallApi("/api/protected_instance/kill", {"uuid": instanceUUID, "remote_uuid": remoteUUID})
-                    except RuntimeError as err:
-                        logger.error(err)
-                        return "关闭实例失败，api返回异常"
-                    else:
-                        return "执行成功，强制关闭实例"
-                else:
+        if forceKILL:
+            match self.GetInstanceInfo(remoteUUID, instanceUUID):
+                case -1:
+                    return "实例状态未知，无法关闭"
+                case 0:
+                    return "实例已停止，无法关闭"
+            try:
+                self.CallApi("/api/protected_instance/kill", {"uuid": instanceUUID, "remote_uuid": remoteUUID})
+            except RuntimeError as err:
+                logger.error(err)
+                return "关闭实例失败，api返回异常"
+            else:
+                return "执行成功，强制关闭实例"
+        else:
+            match self.GetInstanceInfo(remoteUUID, instanceUUID):
+                case -1:
+                    return "实例状态未知，无法关闭"
+                case 0:
+                    return "实例已停止，无法关闭"
+                case 1:
+                    return "实例正在停止，无法关闭"
+                case 2:
+                    return "实例正在启动中，无法关闭"
+                case 3:
                     try:
                         self.CallApi("/api/protected_instance/stop", {"uuid": instanceUUID, "remote_uuid": remoteUUID})
                     except RuntimeError as err:

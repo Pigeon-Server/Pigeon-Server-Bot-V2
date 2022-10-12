@@ -3,6 +3,7 @@ from pathlib import Path
 from module.BasicModule.Logger import logger
 from typing import Union, Optional
 
+
 class ConfigTools:
     @staticmethod
     def loadConfig(filename: str, objectTarget: Optional[object] = None) -> Union[dict, list, object]:
@@ -18,7 +19,9 @@ class ConfigTools:
             logger.error(f"{filename}配置文件不存在")
         else:
             try:
-                return load(open(f"config/{filename}", "r", encoding="UTF-8", errors="ignore")) if objectTarget is None else load(open(f"config/{filename}", "r", encoding="UTF-8", errors="ignore"), object_hook=objectTarget)
+                return load(open(f"config/{filename}", "r", encoding="UTF-8",
+                                 errors="ignore")) if objectTarget is None else load(
+                    open(f"config/{filename}", "r", encoding="UTF-8", errors="ignore"), object_hook=objectTarget)
             except:
                 logger.error(f"{filename}已损坏")
 
@@ -30,6 +33,7 @@ class ConnectConfig:
     Token: str
     SSL: bool
 
+
 class CosConfig:
     BizType: str
     Bucket: str
@@ -38,6 +42,7 @@ class CosConfig:
     agentAddress: bool
     ConnectConfig: ConnectConfig
 
+
 class DataBaseConfig:
     Host: str
     Password: str
@@ -45,9 +50,11 @@ class DataBaseConfig:
     DatabaseName: str
     Port: int
 
+
 class GroupConfig:
     AdminGroup: int
     PlayerGroup: int
+
 
 class MiraiHTTP:
     Host: str
@@ -56,6 +63,7 @@ class MiraiHTTP:
     SyncId: str
     SingleMode: bool
 
+
 class MiraiBotConfig:
     QQ: int
     ConnectType: str
@@ -63,13 +71,16 @@ class MiraiBotConfig:
     GroupConfig: GroupConfig
     MiraiHTTP: MiraiHTTP
 
+
 class WebsocketConfig:
     host: str
     port: int
 
+
 class Age:
     min: int
     max: int
+
 
 class AutomaticReview:
     level: int
@@ -77,9 +88,18 @@ class AutomaticReview:
     Refuse: bool
     BlackList: bool
 
+
 class MCSMConfig:
     apikey: str
     apiurl: str
+    updateTime: int
+
+
+class Permission:
+    default: str
+    common: str
+    ban: str
+
 
 class ConfigInit:
     ConfigVersion: float
@@ -93,41 +113,50 @@ class ConfigInit:
     UpdateCheckInterval: int
     WelcomeMessage: str
     MCSMConfig: MCSMConfig
+    Permission: Permission
 
     def __init__(self, json):
         self.__dict__ = json
+
 
 class RconConfig:
     RconHost: str
     RconPassword: str
     RconPort: int
 
+
 class Whitelist:
     Add: str
     Del: str
+
 
 class Ban:
     Add: str
     Del: str
 
+
 class Bot:
     Del: str
+
 
 class VanillaCommand:
     Whitelist: Whitelist
     Ban: Ban
     Bot: Bot
 
+
 class VanillaServer:
     ServerName: str
     RconConfig: RconConfig
     Command: VanillaCommand
+
 
 class ServerConfigInit:
     VanillaServer: VanillaServer
 
     def __init__(self, json):
         self.__dict__ = json
+
 
 class ModuleConfigInit:
     WebsocketReport: bool
