@@ -38,13 +38,6 @@ class DataBase:
 
         return self.__DataBase
 
-    def SetConfig(self, dateBaseName: str = "database", host: str = "127.0.0.1", userName: str = "root", passwd: str = "password", port: int = 3306) -> None:
-        self.__DBHost = host
-        self.__DBName = dateBaseName
-        self.__DBUserPasswd = passwd
-        self.__DBUserName = userName
-        self.__DBPort = port
-
     def Connect(self) -> None:
 
         """
@@ -69,17 +62,4 @@ class DataBase:
             self.__DataBase = dataBase
         except:
             logger.error("无法连接到数据库")
-
-    def Disconnect(self) -> None:
-        self.__DataBase.commit()
-        self.__DataBase.close()
-
-    def __del__(self) -> None:
-
-        """
-        析构函数\n
-        :return: None
-        """
-
-        self.__DataBase.commit()
-        self.__DataBase.close()
+            exit()

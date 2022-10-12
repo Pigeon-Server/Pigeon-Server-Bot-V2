@@ -7,13 +7,16 @@ from module.Interlining.UsefulTools import IsAtBot, IsAdminGroup, IsPlayerGroup
 from mirai.models.message import Plain
 from module.Class.ServerClass import MinecraftServer
 from module.Interlining.UsefulTools import PingDataBase, JudgeToken, Segmentation
+from module.BasicModule.Permission import per
+from module.BasicModule.Config import MainConfig
+
 
 class WhitelistClass:
 
-    __MinecraftServer: MinecraftServer
+    _MinecraftServer: MinecraftServer
 
     def __init__(self, server: MinecraftServer) -> None:
-        self.__MinecraftServer = server
+        self._MinecraftServer = server
 
     async def PassOne(self, id: str, output: bool = True) -> None | dict:
         PingDataBase()
@@ -24,9 +27,9 @@ class WhitelistClass:
                 cursor.execute(f"update wait SET pass = 1 where id = '{id}'")
                 cursor.execute(f"INSERT INTO `whitelist` (`id`, `account`, `PlayerName`, `UserSource`, `GameVersion`, `token`) VALUES ({data[0]}, '{data[1]}', '{data[2]}', '{data[3]}', '{data[8]}', '{data[12]}')")
                 if data[8] == "BE":
-                    await self.__MinecraftServer.AddWhitelist(('BE_' + data[2])[:16])
+                    await self._MinecraftServer.AddWhitelist(('BE_' + data[2])[:16])
                 else:
-                    await self.__MinecraftServer.AddWhitelist(data[2])
+                    await self._MinecraftServer.AddWhitelist(data[2])
                 if output:
                     await message.AdminMessage(f"{data[2]}添加白名单成功")
                     await message.PlayerMessage(f"添加白名单成功", data[1])
@@ -48,6 +51,8 @@ class WhitelistClass:
                         "name": data[2],
                         "status": False
                     }
+            else:
+                per.SetPlayerGroup(data[1], MainConfig.Permission.common)
 
     async def RefuseOne(self, id: str, reason: str = None) -> None:
         PingDataBase()
@@ -148,18 +153,18 @@ class WhitelistClass:
                             try:
                                 match data[8]:
                                     case "BE":
-                                        await self.__MinecraftServer.ServerRunCommand(f"kick {('BE_' + data[2])[:16]}")
-                                        await self.__MinecraftServer.ServerRunCommand(f"ban {('BE_' + data[2])[:16]}")
-                                        await self.__MinecraftServer.DelWhitelist(('BE_' + data[2])[:16])
-                                        await self.__MinecraftServer.AddWhitelist(('BE_' + newName)[:16])
+                                        await self._MinecraftServer.ServerRunCommand(f"kick {('BE_' + data[2])[:16]}")
+                                        await self._MinecraftServer.ServerRunCommand(f"ban {('BE_' + data[2])[:16]}")
+                                        await self._MinecraftServer.DelWhitelist(('BE_' + data[2])[:16])
+                                        await self._MinecraftServer.AddWhitelist(('BE_' + newName)[:16])
                                         cursor.execute(f"INSERT INTO `usedname` (`PlayerName`, `account`) values ('{data[2]}', '{account}')")
                                         cursor.execute(
                                             f"update wait set PlayerName = '{newName}' where account = '{account}'")
                                     case "Java":
-                                        await self.__MinecraftServer.ServerRunCommand(f"kick {data[2]}")
-                                        await self.__MinecraftServer.ServerRunCommand(f"ban {data[2]}")
-                                        await self.__MinecraftServer.DelWhitelist(data[2])
-                                        await self.__MinecraftServer.AddWhitelist(newName)
+                                        await self._MinecraftServer.ServerRunCommand(f"kick {data[2]}")
+                                        await self._MinecraftServer.ServerRunCommand(f"ban {data[2]}")
+                                        await self._MinecraftServer.DelWhitelist(data[2])
+                                        await self._MinecraftServer.AddWhitelist(newName)
                                         cursor.execute(
                                             f"INSERT INTO `usedname` (`PlayerName`, `account`) values ('{data[2]}', '{account}')")
                                         cursor.execute(

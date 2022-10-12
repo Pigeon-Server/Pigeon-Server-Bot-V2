@@ -10,8 +10,6 @@ if not exists("config"):
     mkdir("config")
     logger.error("无法找到配置文件")
     exit()
-if not exists("data"):
-    mkdir("data")
 configTools = ConfigTools()
 logger.debug("开始加载配置文件")
 try:
@@ -37,7 +35,7 @@ try:
         logger.debug("图片审核模块已启用，正在加载")
         ImageList: JsonDataBaseCLass = JsonDataBaseCLass("image.json", 5)
         logger.success("图片审核模块加载成功")
-    if ModuleConfig.Shutup:
+    if ModuleConfig.Shutup and ModuleConfig.Questions:
         logger.debug("屏蔽模块已启用，正在加载")
         ExceptList: JsonDataBaseCLass = JsonDataBaseCLass("except.json", 4)
         logger.success("屏蔽模块加载成功")

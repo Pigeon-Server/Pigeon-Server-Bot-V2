@@ -1,4 +1,4 @@
-from module.BasicModule.Config import MainConfig, FAQConfig, ModuleConfig
+from module.BasicModule.Config import MainConfig, ModuleConfig
 from module.BasicModule.SqlRelate import connected, cursor
 from mirai.models.message import MessageChain, At
 from mirai.models.events import GroupMessage
@@ -11,7 +11,8 @@ from typing import Union
 if ModuleConfig.ImageReview:
     from module.BasicModule.Config import ImageList
 
-def IsAdminGroup(Group: str) -> bool:
+
+def IsAdminGroup(Group: int) -> bool:
     """
     判断所给出的是否是管理员群\n
     :param Group: 群号
@@ -21,7 +22,7 @@ def IsAdminGroup(Group: str) -> bool:
     return Group == MainConfig.MiraiBotConfig.GroupConfig.AdminGroup
 
 
-def IsPlayerGroup(Group: str) -> bool:
+def IsPlayerGroup(Group: int) -> bool:
     """
     判断所给出的是否是玩家群\n
     :param Group: 群号
@@ -50,31 +51,35 @@ def IsAtBot(chain: MessageChain) -> bool:
         return chain.get_first(At).target == MainConfig.MiraiBotConfig.QQ
 
 
-def FindAnswer(event: GroupMessage) -> Union[str, None]:
-    """
-    匹配关键词回复的答案\n
-    :param event: 消息事件
-    :return: 找到返回字符串，未找到返回None
-    """
+if ModuleConfig.Questions:
+    from module.BasicModule.Config import FAQConfig
 
-    message: str = str(event.message_chain)  # 将消息链转换成文本
-    respond: str = None
 
-    if str(event.group.id) in FAQConfig.keys():  # 如果群号在字典内出现
-        answer: dict = FAQConfig[str(event.group.id)]  # 提取该群的回答
-        for raw in answer:  # 循环关键字
-            if raw in message:  # 如果匹配
-                respond = answer[raw]  # 返回结果
-    if respond is None:  # 如果第一层循环没有找到答案
-        if event.group.id == MainConfig.MiraiBotConfig.GroupConfig.AdminGroup:
-            return None
-        Global: dict = FAQConfig["global"]  # 提取出全局问答
-        for raw in Global:  # 循环关键字
-            if raw in message:  # 如果匹配
-                return Global[raw]  # 返回结果
-        return None  # 两遍循环都没找到则返回None
-    else:
-        return respond  # 如果第一层循环找到答案就直接返回
+    def FindAnswer(event: GroupMessage) -> Union[str, None]:
+        """
+        匹配关键词回复的答案\n
+        :param event: 消息事件
+        :return: 找到返回字符串，未找到返回None
+        """
+
+        message: str = str(event.message_chain)  # 将消息链转换成文本
+        respond: str = ""
+
+        if str(event.group.id) in FAQConfig.keys():  # 如果群号在字典内出现
+            answer: dict = FAQConfig[str(event.group.id)]  # 提取该群的回答
+            for raw in answer:  # 循环关键字
+                if raw in message:  # 如果匹配
+                    respond = answer[raw]  # 返回结果
+        if respond is None:  # 如果第一层循环没有找到答案
+            if event.group.id == MainConfig.MiraiBotConfig.GroupConfig.AdminGroup:
+                return None
+            Global: dict = FAQConfig["global"]  # 提取出全局问答
+            for raw in Global:  # 循环关键字
+                if raw in message:  # 如果匹配
+                    return Global[raw]  # 返回结果
+            return None  # 两遍循环都没找到则返回None
+        else:
+            return respond  # 如果第一层循环找到答案就直接返回
 
 
 async def Segmentation(send, message: str) -> None:
@@ -161,6 +166,7 @@ def JudgeToken(id: int) -> dict:
             "status": False,
             "info": "未查询到玩家"
         }
+
 
 async def DownloadFile(urls: list, Path: str, FileName: Union[list, bool], recall, callback=None) -> Union[list, None]:
 
