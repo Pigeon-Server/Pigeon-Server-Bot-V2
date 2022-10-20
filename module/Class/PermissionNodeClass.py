@@ -65,7 +65,7 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
             Common: str = "Permission.Group.Reload.Common"
             Force: str = "Permission.Group.Reload.Force"
 
-        List: str = "Permission.List"
+        ShowList: str = "Permission.List"
 
         def GetAllPermissionNode(self) -> list:
             return [self.Player.Check, self.Player.Clone, self.Player.Give, self.Player.Remove,

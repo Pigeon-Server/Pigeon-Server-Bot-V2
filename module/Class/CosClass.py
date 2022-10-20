@@ -6,6 +6,7 @@ from os.path import exists, split, join
 from typing import Optional, List
 from module.BasicModule.Config import ImageList
 
+
 class CosClass:  # Cos属于付费接口，尽量少调用
     __ConnectConfig = None
     __client = None

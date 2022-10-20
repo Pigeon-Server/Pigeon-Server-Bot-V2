@@ -695,7 +695,7 @@ async def Permission(event: GroupMessage):
                             else:
                                 await send("命令参数不正确")
             elif command[1] == "list":
-                if checkPlayer(per.Permission.List):
+                if checkPlayer(per.Permission.ShowList):
                     if commandLen == 2:
                         data = per.GetPermissionNode()
                         msg = "所有权限节点: \n"
@@ -712,12 +712,12 @@ async def Permission(event: GroupMessage):
                     await send("你无权这么做")
             elif command[1] == "reload":
                 if commandLen == 2:
-                    if checkPlayer(per.Permission.Group.Reload.Common):
+                    if checkPlayer(per.Permission.Reload.Common):
                         await send(per.ReloadGroupPermission())
                     else:
                         await send("你无权这么做")
                 elif commandLen == 3 and command[2] == "true":
-                    if checkPlayer(per.Permission.Group.Reload.Force):
+                    if checkPlayer(per.Permission.Reload.Force):
                         await send(per.ReloadGroupPermission(True))
                     else:
                         await send("你无权这么做")
