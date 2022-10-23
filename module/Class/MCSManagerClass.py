@@ -26,10 +26,7 @@ class MCSMClass(JsonDataBaseCLass):
         super().__init__("MCSM.json", 5)
         if not url.startswith("http"):
             raise IncomingParametersError("api地址错误,必须以http或https开头")
-        if url.startswith("http"):
-            self.__SSL = False
-        elif url.startswith("https"):
-            self.__SSL = EnableSSL
+        self.__SSL = False if url.startswith("http://") else EnableSSL
         self.__apiUrl = url if "/api" in url else f"{url}/api"
         self.__apikey = apikey
         self.__Server = {}
@@ -52,12 +49,13 @@ class MCSMClass(JsonDataBaseCLass):
             exit()
 
     # 基础模块
-    def CallApi(self, Path: str, Parameters: Optional[dict] = None) -> dict:
+    def CallApi(self, Path: str, Parameters: Optional[dict] = None, log: bool = True) -> dict:
         """
         对API发起请求\n
         Args:
             Path: api路径
             Parameters: 需要在请求中额外添加的参数（除apikey以外的参数）
+            log: 是否输出访问信息
         Returns:
             dict: 返回api返回的内容(dict)没有访问成功则抛出异常
         """
@@ -77,7 +75,8 @@ class MCSMClass(JsonDataBaseCLass):
                 parameters.update(Parameters)
             else:
                 raise ValueError("请求参数错误！")
-        logger.debug(f"尝试请求api{url}")
+        if log:
+            logger.debug(f"尝试请求api{url}")
         res = get(url=url, headers={"Content-Type": "application/json; charset=utf-8"},
                   params=parameters, timeout=10, verify=self.__SSL).json()
         match res.get("status"):
@@ -190,17 +189,18 @@ class MCSMClass(JsonDataBaseCLass):
             return 2
 
     # 第一次封装
-    def GetInstanceInfo(self, remoteUUID: str, instanceUUID: str, FullData: bool = False) -> Optional[Union[int, dict]]:
+    def GetInstanceInfo(self, remoteUUID: str, instanceUUID: str, FullData: bool = False, log: bool = True) -> Optional[Union[int, dict]]:
         """
         获取实例状态\n
         Args:
             remoteUUID: 守护进程uuid
             instanceUUID: 实例uuid
             FullData: 是否返回完整结果，如果为False则只返回状态码（默认为False）
+            log: 是否输出调试信息
         """
         try:
             try:
-                data = self.CallApi("/api/instance", {"uuid": instanceUUID, "remote_uuid": remoteUUID})
+                data = self.CallApi("/api/instance", {"uuid": instanceUUID, "remote_uuid": remoteUUID}, log)
             except RuntimeError as err:
                 logger.error(err)
                 return None
@@ -229,17 +229,15 @@ class MCSMClass(JsonDataBaseCLass):
                 for item in self.__Server:
                     data = self.__Server[item].get("instances")
                     for raw in data:
-                        data[raw]["status"] = self.GetInstanceInfo(item, raw)
+                        data[raw]["status"] = self.GetInstanceInfo(item, raw, log=False)
             elif remoteUUID is not None and instanceUUID is None:
                 data = self.__Server[remoteUUID].get("instances")
                 for raw in data:
-                    data[raw]["status"] = self.GetInstanceInfo(remoteUUID, raw)
+                    data[raw]["status"] = self.GetInstanceInfo(remoteUUID, raw, log=False)
             elif remoteUUID is not None and instanceUUID is not None:
-                self.__Server[remoteUUID].get("instances")[instanceUUID]["status"] = self.GetInstanceInfo(remoteUUID, instanceUUID)
+                self.__Server[remoteUUID].get("instances")[instanceUUID]["status"] = self.GetInstanceInfo(remoteUUID, instanceUUID, log=False)
         except:
             logger.error("更新实例状态出错")
-        else:
-            logger.debug("成功更新实例信息")
 
     def GetInstanceStatus(self, remoteUUID: str, instanceUUID: str, ReturnStatusCode: bool = False) -> Union[int, str]:
         if ReturnStatusCode:

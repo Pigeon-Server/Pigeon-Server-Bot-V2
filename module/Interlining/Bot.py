@@ -8,7 +8,7 @@ from module.BasicModule.Logger import logger
 from module.Class.Message import Message
 from module.Class.ExceptionClass import ConnectionTypeError
 
-adapter: HTTPAdapter | WebSocketAdapter = None  # 定义适配器
+adapter: HTTPAdapter | WebSocketAdapter | None = None  # 定义适配器
 match MainConfig.MiraiBotConfig.ConnectType:
     case "Http":
         adapter = HTTPAdapter(verify_key=MainConfig.MiraiBotConfig.MiraiHTTP.Key,

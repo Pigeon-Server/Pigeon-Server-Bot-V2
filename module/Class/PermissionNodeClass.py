@@ -65,7 +65,7 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
             Common: str = "Permission.Group.Reload.Common"
             Force: str = "Permission.Group.Reload.Force"
 
-        List: str = "Permission.List"
+        ShowList: str = "Permission.List"
 
         def GetAllPermissionNode(self) -> list:
             return [self.Player.Check, self.Player.Clone, self.Player.Give, self.Player.Remove,
@@ -74,7 +74,7 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                     self.Group.List, self.Group.Clone, self.Group.Remove, self.Group.Give, self.Group.Info,
                     self.Group.Del, self.Group.Inherit.Add, self.Group.Inherit.Del, self.Group.Check,
                     self.Reload.Common, self.Reload.Force,self.Group.Create,
-                    self.List]
+                    self.ShowList]
 
     class Whitelist:
         """
@@ -140,6 +140,7 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
         self._PermissionNodeList += self.Whitelist.GetAllPermissionNode(self.Whitelist())
         self._PermissionNodeList += self.Token.GetAllPermissionNode(self.Token())
         self._PermissionNodeList += self.Question.GetAllPermissionNode(self.Question())
+        self.n = 0
 
     def ReloadGroupPermission(self, overWrite: bool = False) -> str:
         """
@@ -186,6 +187,7 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
         Returns:
             返回权限节点列表
         """
+
         result = []
         name: str
         if not isinstance(groupName, list):
@@ -236,10 +238,7 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                 if permission in userPermission:
                     return f"此用户已有{permission}权限" if permission in self.Data[userId]["permission"] else "该用户下某一用户组具有该权限"
                 else:
-                    if self.CheckPlayerPermission(userId, permission):
-                        self.Data[userId]["permission"].append(permission)
-                    else:
-                        return f"你必须拥有{permission}权限才能给予他人{permission}权限"
+                    self.Data[userId]["permission"].append(permission)
             else:
                 self.Data[userId] = {
                     "group": ["default"],
@@ -284,7 +283,9 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
         userId = str(userId)
         try:
             if userId in self.Data.keys():
-                data: list = self.Data[userId]["permission"]
+                # data: list = self.Data[userId]["permission"] 错误用法！！！！！！！！！！！！！！！！！！！！
+                data: list = []
+                data += self.Data[userId]["permission"]
                 if "group" in self.Data[userId].keys():
                     data += self.GetGroupPermission(self.Data[userId]["group"])
                 if f"-{permission}" in data:
