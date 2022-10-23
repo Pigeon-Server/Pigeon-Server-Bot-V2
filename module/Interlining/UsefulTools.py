@@ -63,7 +63,7 @@ if ModuleConfig.Questions:
         """
 
         message: str = str(event.message_chain)  # 将消息链转换成文本
-        respond: str = ""
+        respond: str | None = None
 
         if str(event.group.id) in FAQConfig.keys():  # 如果群号在字典内出现
             answer: dict = FAQConfig[str(event.group.id)]  # 提取该群的回答

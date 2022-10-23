@@ -102,7 +102,7 @@ class Permission:
 
 
 class ConfigInit:
-    ConfigVersion: float
+    ConfigVersion: str
     infoLimit: int
     CosConfig: CosConfig
     DataBaseConfig: DataBaseConfig

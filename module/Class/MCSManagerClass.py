@@ -238,8 +238,6 @@ class MCSMClass(JsonDataBaseCLass):
                 self.__Server[remoteUUID].get("instances")[instanceUUID]["status"] = self.GetInstanceInfo(remoteUUID, instanceUUID, log=False)
         except:
             logger.error("更新实例状态出错")
-        else:
-            logger.debug("成功更新实例信息")
 
     def GetInstanceStatus(self, remoteUUID: str, instanceUUID: str, ReturnStatusCode: bool = False) -> Union[int, str]:
         if ReturnStatusCode:
