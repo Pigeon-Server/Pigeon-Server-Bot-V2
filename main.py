@@ -1,7 +1,7 @@
 from module.BasicModule.Config import MainConfig, ModuleConfig
 from module.BasicModule.Logger import logger
 if MainConfig.ConfigVersion != "0.1.0":
-    logger.error("配置文件版本出错牌！请检查")
+    logger.error("配置文件版本出错！请检查")
     exit()
 
 from module.Object.Base import *

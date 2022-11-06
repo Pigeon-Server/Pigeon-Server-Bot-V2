@@ -120,6 +120,6 @@ async def MCSMCommand(event: GroupMessage):
                         cmd = ""
                         for x in range(3, commandLen):
                             cmd = cmd + command[x] + " "
-                        await send(MCSM.RunCommand(command[1], command[2], cmd))
+                        await send(MCSM.RunCommand(command[1], command[2], cmd.removesuffix(" ")))
                     else:
                         await send("你无权这么做")

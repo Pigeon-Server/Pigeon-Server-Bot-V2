@@ -171,6 +171,7 @@ class ModuleConfigInit:
     DebugMode: bool
     MCSMModule: bool
     CheckMCUpdate: bool
+    TPS: bool
 
     def __init__(self, json):
         self.__dict__ = json

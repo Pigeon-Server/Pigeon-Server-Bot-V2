@@ -354,14 +354,7 @@ class MCSMClass(JsonDataBaseCLass):
         else:
             tempList: list = []
             time = strftime("[%H:%M:%S]", localtime(timeStamp))
-            data = data["data"].replace("\x1b[m//\r \r\x1b[34m", "") \
-                               .replace("\x1b[m/\r \r\x1b[34m", "") \
-                               .replace("\r \r\x1b[34m", "") \
-                               .replace("\x1b[36m", "") \
-                               .replace("\x1b[32m", "") \
-                               .replace("\x1b[0m", "") \
-                               .replace("\x1b[m", "") \
-                               .split("\n")[-20:]
+            data = data["data"].split("\n")[-20:]
             for item in data:
                 if item[:10] == time and "[Server thread/INFO]" in item:
                     tempList.append(item)
