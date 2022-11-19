@@ -26,7 +26,7 @@ async def CommandSpy(event: GroupMessage, command: list):
     targetMessage = event.message_chain.message_id
     per.CreatPlayer(str(event.sender.id), MainConfig.Permission.default if IsPlayerGroup(event.group.id) else MainConfig.Permission.common)
     if commandLen > 0:
-        if ModuleConfig.WhiteList and IsPlayerGroup(event.group.id):
+        if ModuleConfig.WhiteList:
             if command[0] == "apply" or command[0] == "白名单":
                 if per.CheckPlayerPermission(event.sender.id, per.Whitelist.Apply):
                     match commandLen:
@@ -43,7 +43,7 @@ async def CommandSpy(event: GroupMessage, command: list):
                                 if rematch('^[A-Z]+$', token) is None:
                                     await message.PlayerMessage("Token应为十六位大写字母", targetMessage=targetMessage)
                                 else:
-                                    await whitelist.GetWhiteList(targetMessage, token, str(event.sender.id))
+                                    await whitelist.GetWhitelist(targetMessage, token, str(event.sender.id))
                 else:
                     await message.PlayerMessage("你无权这么做")
             elif command[0] == "change" or command[0] == "改名":

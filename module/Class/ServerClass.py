@@ -2,6 +2,7 @@ from module.Class.ExceptionClass import IncomingParametersError, CommandNotFound
 from module.BasicModule.Logger import logger
 from rcon.source import rcon
 
+
 class MinecraftServer:
     _Command: dict
     ServerName: str
@@ -12,6 +13,8 @@ class MinecraftServer:
     def __init__(self, ServerName: str, RconConfig: dict, Command: dict) -> None:
         if isinstance(ServerName, str) and isinstance(RconConfig, dict) and isinstance(Command, dict):
             self.ServerName = ServerName
+            for item in Command:
+                Command[item] = vars(Command[item])
             self._Command = Command
             self._Host = RconConfig["RconHost"]
             self._Port = RconConfig["RconPort"]

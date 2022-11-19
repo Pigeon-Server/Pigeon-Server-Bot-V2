@@ -102,9 +102,9 @@ async def MCSMCommand(event: GroupMessage):
                 case "start":
                     if checkPlayer(per.Mcsm.Start):
                         if commandLen == 2:
-                            await send(MCSM.Start(command[1])["info"])
+                            await send(MCSM.Start(command[1]))
                         elif commandLen == 3:
-                            await send(MCSM.Start(command[1], command[2])["info"])
+                            await send(MCSM.Start(command[1], command[2]))
                     else:
                         await send("你无权这么做")
                 case "restart":
@@ -120,6 +120,6 @@ async def MCSMCommand(event: GroupMessage):
                         cmd = ""
                         for x in range(3, commandLen):
                             cmd = cmd + command[x] + " "
-                        await send(MCSM.RunCommand(command[1], command[2], cmd))
+                        await send(await MCSM.RunCommand(command[1], command[2], cmd.removesuffix(" ")))
                     else:
                         await send("你无权这么做")

@@ -5,6 +5,7 @@ from typing import Optional, Union
 from sys import exit
 from module.Class.JsonDataBaseClass import JsonDataBaseCLass
 from time import strftime, localtime
+from asyncio import sleep
 
 
 class MCSMClass(JsonDataBaseCLass):
@@ -354,14 +355,7 @@ class MCSMClass(JsonDataBaseCLass):
         else:
             tempList: list = []
             time = strftime("[%H:%M:%S]", localtime(timeStamp))
-            data = data["data"].replace("\x1b[m//\r \r\x1b[34m", "") \
-                               .replace("\x1b[m/\r \r\x1b[34m", "") \
-                               .replace("\r \r\x1b[34m", "") \
-                               .replace("\x1b[36m", "") \
-                               .replace("\x1b[32m", "") \
-                               .replace("\x1b[0m", "") \
-                               .replace("\x1b[m", "") \
-                               .split("\n")[-20:]
+            data = data["data"].split("\n")[-20:]
             for item in data:
                 if item[:10] == time and "[Server thread/INFO]" in item:
                     tempList.append(item)
@@ -386,14 +380,16 @@ class MCSMClass(JsonDataBaseCLass):
         else:
             return res
 
-    def RunCommand(self, instanceName: str, remoteName: str, command: str) -> str:
+    async def RunCommand(self, instanceName: str, remoteName: str, command: str) -> str:
         res = self.CheckName(remoteName, instanceName)
         if isinstance(res, bool):
             instanceUUID = self.TranslateNameToUUID(instanceName)
             remoteUUID = self.TranslateNameToUUID(remoteName)
             status = self.GetInstanceInfo(remoteUUID, instanceUUID)
             if status == 3:
-                return self.GetCommandOutPut(instanceUUID, remoteUUID, self.Command(instanceUUID, remoteUUID, command))
+                time = self.Command(instanceUUID, remoteUUID, command)
+                await sleep(0.1)
+                return self.GetCommandOutPut(instanceUUID, remoteUUID, time)
             else:
                 return f"实例当前状态是:{self.StatusCode(status)},无法执行命令"
         else:
