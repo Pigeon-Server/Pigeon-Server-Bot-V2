@@ -34,5 +34,5 @@ if ModuleConfig.TPS:
     async def Tps(event: GroupMessage, execute: bool):
         if execute:
             command = str(event.message_chain)[1:].rsplit(" ")
-            temp = MCSM.RunCommand(command[1], "Server1", "forge tps").rsplit("\n")
+            temp = (await MCSM.RunCommand(command[1], "Server1", "forge tps")).rsplit("\n")
             await message.SendMessage(event.group.id, temp[len(temp) - 1], groupName=event.group.name)

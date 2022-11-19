@@ -5,6 +5,7 @@ from typing import Optional, Union
 from sys import exit
 from module.Class.JsonDataBaseClass import JsonDataBaseCLass
 from time import strftime, localtime
+from asyncio import sleep
 
 
 class MCSMClass(JsonDataBaseCLass):
@@ -379,14 +380,16 @@ class MCSMClass(JsonDataBaseCLass):
         else:
             return res
 
-    def RunCommand(self, instanceName: str, remoteName: str, command: str) -> str:
+    async def RunCommand(self, instanceName: str, remoteName: str, command: str) -> str:
         res = self.CheckName(remoteName, instanceName)
         if isinstance(res, bool):
             instanceUUID = self.TranslateNameToUUID(instanceName)
             remoteUUID = self.TranslateNameToUUID(remoteName)
             status = self.GetInstanceInfo(remoteUUID, instanceUUID)
             if status == 3:
-                return self.GetCommandOutPut(instanceUUID, remoteUUID, self.Command(instanceUUID, remoteUUID, command))
+                time = self.Command(instanceUUID, remoteUUID, command)
+                await sleep(0.1)
+                return self.GetCommandOutPut(instanceUUID, remoteUUID, time)
             else:
                 return f"实例当前状态是:{self.StatusCode(status)},无法执行命令"
         else:

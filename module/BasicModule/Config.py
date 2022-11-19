@@ -41,7 +41,7 @@ try:
         logger.success("屏蔽模块加载成功")
     if ModuleConfig.BlackList or ModuleConfig.WhiteList:
         logger.debug("服务器模块已启用，正在加载")
-        ServerConfig: dict = configTools.loadConfig("server.json5", ServerConfigInit)
+        ServerConfig: ServerConfigInit = configTools.loadConfig("server.json5", ServerConfigInit)
         logger.success("服务器模块加载成功")
     if ModuleConfig.CheckMCUpdate:
         logger.debug("检查MC更新已启用，正在加载")
