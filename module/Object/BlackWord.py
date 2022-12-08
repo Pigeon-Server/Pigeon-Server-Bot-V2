@@ -1,9 +1,10 @@
 from module.BasicModule.Config import BlockingWordList
-from mirai.models.events import GroupMessage
+from mirai.models.events import GroupMessage, NudgeEvent
 from mirai_extensions.trigger import Filter
 from module.Interlining.UsefulTools import IsAdminGroup
 from re import match as rematch
 from module.Interlining.Bot import control, message, bot
+from module.BasicModule.Config import MainConfig
 from asyncio import sleep
 from datetime import datetime
 
@@ -54,3 +55,25 @@ async def BlockingWord(event: GroupMessage, recall: bool):
         await message.Recall(event.message_chain.message_id)  # 撤回
         await message.Mute(event.group.id, event.sender.id, CheckTime(str(event.sender.id)))
         await message.SendMessage(event.group.id, "触发违禁词，已撤回消息", event.group.name, event.sender.id)
+
+
+dataDict = {}
+
+
+@bot.on(NudgeEvent)
+async def fuck(event: NudgeEvent):
+    if event.target == MainConfig.MiraiBotConfig.QQ:
+        if str(event.from_id) not in dataDict.keys():
+            dataDict[str(event.from_id)] = 1
+        match dataDict[str(event.from_id)]:
+            case 1:
+                await message.Mute(event.subject.id, event.from_id, 3600)
+                dataDict[str(event.from_id)] += 1
+            case 2:
+                await message.Mute(event.subject.id, event.from_id, 86400)
+                dataDict[str(event.from_id)] += 1
+            case 3:
+                await message.Mute(event.subject.id, event.from_id, 2592000)
+                dataDict[str(event.from_id)] += 1
+            case 4:
+                await bot.kick(event.subject.id, event.from_id, "说了N遍了不听，爪巴")
