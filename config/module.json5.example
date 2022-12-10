@@ -1,11 +1,15 @@
 {
-  KookInterflow: false,
+  WebsocketReport: false,
   ImageReview: false,
-  BlackList: true,
-  Whitelist: true,
-  BlockWord: true,
-  Questions: true,
-  Shutup: true,
-  Online: true,
+  BlackList: false,
+  WhiteList: false,
+  BlockWord: false,
+  Questions: false,
+  Shutup: false,
+  Online: false,
+  AutomaticReview: false,
+  CheckMCUpdate: false,
+  MCSMModule: false,
+  TPS: false,
   DebugMode: false
 }

@@ -1,5 +1,5 @@
 {
-	ConfigVersion: 1.0,
+	ConfigVersion: "0.1.0",
 	infoLimit: 15,
 	UpdateCheckInterval: 600,
 	// 格式化字符串，当前支持列表
@@ -13,58 +13,105 @@
 	// groupId 入群群号
 	// groupName 入群的群名称
 	// 请勿使用双层大括号，比如{image:{variable:xxxx}}!
-	WelcomeMessage: "{at:qq}, 欢迎加入{variable:groupName}",
+	WelcomeMessage: "{at:qq}, 欢迎加入{variable:groupName}。\n进群养成好习惯，先看群公告&群文件",
 	CosConfig: {
 		ConnectConfig: {
-			SecretId: "123",
-			SecretKey: "123",
-			Region: "ap-guangzhou",
-			Token: "",
+			SecretId: "*******************************",
+			SecretKey: "****************************",
+			Region: "ap-beijing",
+			Token: "*******************",
 			SSL: true
 		},
-		BizType: "123",
-		Bucket: "123",
-		Path: "123",
+		BizType: "******************",
+		Bucket: "*******************",
+		Path: "images",
 		enableAgent: false,
 		agentAddress: {}
 	},
 	DataBaseConfig: {
-		Host: "127.0.0.1",
-		Password: "1231",
+		Host: "Host",
+		Password: "*******",
 		Username: "root",
-		DatabaseName: "test",
+		DatabaseName: "QQ_Bot",
 		Port: 3306
 	},
 	MiraiBotConfig: {
-		QQ: 123123,
+		QQ: 1000000000,
 		ConnectType: "WebSocket",
-		WebSocketPort: 8000,
+		WebSocketPort: 8080,
 		GroupConfig: {
-			AdminGroup: 123123,
-			PlayerGroup: 1241413,
+			AdminGroup: 11111,
+			PlayerGroup: 11111,
 		},
 		MiraiHTTP:{
-			Host: "127.0.0.1",
-			Key: "12345",
+			Host: "Host",
+			Key: "********",
 			Port: 8080,
 			SyncId: "-1",
 			SingleMode: false
 		}
 	},
 	WebsocketConfig: {
-		host: "ws://127.0.0.1",
+		host: "ws://Host",
 		port: 3000
 	},
 	ServerList: {
-		"server": "127.0.0.1:25565",
+		"xx服": "Host:Port",
+		"xx服": "Host:Port",
+		"xx服": "Host:Port"
 	},
-	AutomaticReview: {
-		level: 20,
-		age: {
-			min: 16,
-			max: 60
-		},
-		Refuse: false,
-		BlackList: false
+	MCSMConfig: {
+		apikey: "*****************",
+		apiurl: "http://Host:Port",
+		updateTime: 30
+	},
+	Permission: {
+		"default": "default",
+		"common": "player",
+		"ban": "ban"
+	},
+	AutomaticAuditConfig: {
+		// 群号
+		"11111": {
+			// 审核配置
+			audit_Config: {
+				// 通过所有
+				Pass_All: false,
+				// 拒绝所有
+				Refuse_All: false,
+				// 全部手动审核
+				Manual_Audit_All: false,
+				// 通过条件设置
+				Pass_Config: {
+					// 最小QQ等级
+					Pass_min_level: 40,
+					// 最小年龄
+					Pass_min_Age: 18,
+					// 是否启用入群问答关键字审核
+					Join_Group_Answer_Keyword_Review: true,
+					// 是否启用个性签名审核
+					Signature_Refuse_Keyword: true,
+					// 是否通过机审后需要人工审核
+					Auto_Pass_Manual_Audit: false,
+					// 是否自动审核拒绝后使用人工审核
+					Auto_Refuse_Manual_Audit: false
+				}
+			},
+			// 关键字设置
+			Keyword_config: {
+				// 进群问答可用/不可用关键字
+				Join_Group_Answer_Keyword: {
+					// 允许的关键字
+					Pass_Keywords: [],
+					// 拒绝的关键字
+					Refuse_Keywords:{
+						//关键字	原因
+						xxxx: "xxxxxx"
+					}
+				},
+				// 个性签名不可用关键字
+				Signature_Refuse_Keyword: []
+			}
+		}
 	}
 }
