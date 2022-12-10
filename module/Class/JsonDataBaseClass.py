@@ -1,8 +1,9 @@
+from enum import Enum
 from json import load, dumps
 from os import mkdir
 from os.path import exists
 from typing import Union, Optional
-from enum import Enum
+
 from module.Class.ExceptionClass import NoKeyError
 
 
@@ -110,6 +111,13 @@ class JsonDataBaseCLass:
         将本地缓存的内容写入文件\n
         """
         with open(f"data/{self._DataBaseName}", 'w', encoding="UTF-8") as file:
+            file.write(dumps(self.Data, indent=4, ensure_ascii=False))
+
+    def WriteData(self) -> None:
+        """
+        将本地缓存的内容写入文件\n
+        """
+        with open(f"data/{self.__DataBaseName}", 'w', encoding="UTF-8") as file:
             file.write(dumps(self.Data, indent=4, ensure_ascii=False))
 
     def QueryData(self, data: Union[str, int, float, list, dict], target: Optional[str] = None) -> bool:

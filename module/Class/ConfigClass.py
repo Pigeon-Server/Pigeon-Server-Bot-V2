@@ -1,7 +1,9 @@
-from json5.lib import load
 from pathlib import Path
-from module.BasicModule.Logger import logger
 from typing import Union, Optional
+
+from json5.lib import load
+
+from module.BasicModule.Logger import logger
 
 
 class ConfigTools:
@@ -82,11 +84,11 @@ class Age:
     max: int
 
 
-class AutomaticReview:
-    level: int
-    age: Age
-    Refuse: bool
-    BlackList: bool
+# class AutomaticReview:
+#     level: int
+#     age: Age
+#     Refuse: bool
+#     BlackList: bool
 
 
 class MCSMConfig:
@@ -109,11 +111,12 @@ class ConfigInit:
     MiraiBotConfig: MiraiBotConfig
     WebsocketConfig: WebsocketConfig
     ServerList: object
-    AutomaticReview: AutomaticReview
+    # AutomaticReview: AutomaticReview
     UpdateCheckInterval: int
     WelcomeMessage: str
     MCSMConfig: MCSMConfig
     Permission: Permission
+    AutomaticAuditConfig: object
 
     def __init__(self, json):
         self.__dict__ = json

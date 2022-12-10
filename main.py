@@ -1,10 +1,9 @@
 from module.BasicModule.Config import MainConfig, ModuleConfig
 from module.BasicModule.Logger import logger
-if MainConfig.ConfigVersion != "0.1.0":
-    logger.error("配置文件版本出错！请检查")
+if MainConfig.ConfigVersion not in ["0.1.0"]:
+    logger.error("配置文件版本与当前程序所支持的版本不匹配！请检查")
     exit()
 
-from module.Object.Base import *
 from module.Object.Permission import *
 
 if ModuleConfig.WhiteList or ModuleConfig.BlackList:
