@@ -28,7 +28,7 @@ class JsonDataBaseCLass:
             fileName: 要使用的文件名，应该位于data文件夹下，如果不存在会自动创建
             dataType: 文件内存储的格式 1:str 2:int 3: float 4: list: 5: dict 除了dict外，其他类型均为list存储
         """
-        self._DataBaseName = fileName
+        self.__DataBaseName = fileName
         self._DataType = dataType
         if not exists("data"):
             mkdir("data")
