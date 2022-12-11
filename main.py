@@ -1,48 +1,50 @@
-from module.BasicModule.Config import MainConfig, ModuleConfig
-from module.BasicModule.Logger import logger
-if MainConfig.ConfigVersion not in ["0.1.0"]:
+from module.module_base.config import main_config, module_config
+from module.module_base.logger import logger
+
+if main_config.config_version not in ["0.1.0"]:
     logger.error("配置文件版本与当前程序所支持的版本不匹配！请检查")
     exit()
 
-from module.Object.Permission import *
+from module.module_object.base import *
+from module.module_object.permission import *
 
-if ModuleConfig.WhiteList or ModuleConfig.BlackList:
-    from module.Object.Logic import *
+if module_config.white_list or module_config.black_list:
+    from module.module_object.logic import *
 
 # 是否查询MC更新
-if ModuleConfig.CheckMCUpdate:
-    from module.Object.Update import *
+if module_config.check_mc_update:
+    from module.module_object.update import *
 
 # 是否启用WebSocket上报（未完成）
-if ModuleConfig.WebsocketReport:
-    from module.Object.Websocket import *
+if module_config.websocket_report:
+    from module.module_object.websocket import *
 
 # 是否启用图片审查（未完成）
-if ModuleConfig.ImageReview:
-    from module.Object.Image import *
+if module_config.image_review:
+    from module.module_object.image import *
 
 # 是否启用问答模块
-if ModuleConfig.Questions:
-    from module.Object.Question import *
+if module_config.questions:
+    from module.module_object.question import *
 
 # 是否允许玩家自主设置屏蔽
-if ModuleConfig.Shutup and ModuleConfig.Questions:
-    from module.Object.Shutup import *
+if module_config.shutup and module_config.questions:
+    from module.module_object.shutup import *
 
 # 是否开启在线人数查询
-if ModuleConfig.Online:
-    from module.Object.Online import *
+if module_config.online:
+    from module.module_object.online import *
 
 # 是否开启触发关键词撤回
-if ModuleConfig.BlockWord:
-    from module.Object.BlackWord import *
+if module_config.block_word:
+    from module.module_object.black_word import *
 
 # 自动审核模块
-if ModuleConfig.AutomaticReview:
-    from module.Object.AutoReview import *
+if module_config.automatic_review:
+    from module.module_object.auto_review import *
 
 # MCSM模块
-if ModuleConfig.MCSMModule:
-    from module.Object.Mcsm import *
+if module_config.mcsm_module:
+    from module.module_object.mcsm import *
 
-bot.run(port=MainConfig.MiraiBotConfig.WebSocketPort)
+bot.run(port=main_config.mirai_bot_config.websocket_port)
