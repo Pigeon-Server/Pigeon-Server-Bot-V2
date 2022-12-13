@@ -1,4 +1,3 @@
-from json5 import load
 from module.module_base.config import main_config, module_config
 from module.module_base.logger import logger
 
