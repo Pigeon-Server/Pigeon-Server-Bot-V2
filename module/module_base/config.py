@@ -8,7 +8,7 @@ from os.path import exists
 from os import mkdir
 if not exists("config"):
     mkdir("config")
-    logger.error("无法找到配置文件")
+    logger.error("无法找到配置文件文件夹，已自动创建，请前往github获取config模板文件")
     exit()
 config_tools = ConfigTools()
 logger.debug("开始加载配置文件")

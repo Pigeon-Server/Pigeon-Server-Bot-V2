@@ -44,7 +44,7 @@ class MCSMClass(JsonDataBaseCLass):
             logger.error(err)
             exit()
         except ConnectionError:
-            logger.error("无法访问MCSM，请检查网络和url设置")
+            logger.error("无法访问MCSM，请检查网络和url设置是否出错")
             exit()
         except:
             logger.error("发生未知错误")

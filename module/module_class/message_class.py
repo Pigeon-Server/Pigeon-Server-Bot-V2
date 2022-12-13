@@ -91,7 +91,7 @@ class Message:
             await sleep(uniform(1.0, 0.3))
             await self._bot.send_group_message(group_id, message)
         except:
-            logger.error("发送消息出现错误")
+            logger.error("发送消息时发生错误")
 
     async def recall_and_mute(self, event: GroupMessage, send_message: str) -> None:
         """
@@ -144,28 +144,28 @@ class Message:
                         Plain(message)
                     ]))
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
             case 1:
                 try:
                     await self._bot.send_group_message(target_group, MessageChain([
                         Plain(message)
                     ]), target_message)
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
             case 2:
                 try:
                     await self._bot.send_group_message(target_group, MessageChain([
                         At(at_target), Plain(message)
                     ]))
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
             case 3:
                 try:
                     await self._bot.send_group_message(target_group, MessageChain([
                         At(at_target), Plain(message)
                     ]), target_message)
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
 
     async def send_player_message(self, message: str, at_target: int = None, target_message: int = None) -> None:
         """
@@ -184,28 +184,28 @@ class Message:
                         Plain(message)
                     ]))
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
             case 1:
                 try:
                     await self._bot.send_group_message(self.player_group, MessageChain([
                         Plain(message)
                     ]), target_message)
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
             case 2:
                 try:
                     await self._bot.send_group_message(self.player_group, MessageChain([
                         At(at_target), Plain(message)
                     ]))
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
             case 3:
                 try:
                     await self._bot.send_group_message(self.player_group, MessageChain([
                         At(at_target), Plain(message)
                     ]), target_message)
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
 
     async def send_admin_message(self, message: str, at_target: int = None, target_message: int = None) -> None:
         """
@@ -224,28 +224,28 @@ class Message:
                         Plain(message)
                     ]))
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
             case 1:
                 try:
                     await self._bot.send_group_message(self.admin_group, MessageChain([
                         Plain(message)
                     ]), target_message)
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
             case 2:
                 try:
                     await self._bot.send_group_message(self.admin_group, MessageChain([
                         At(at_target), Plain(message)
                     ]))
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
             case 3:
                 try:
                     await self._bot.send_group_message(self.admin_group, MessageChain([
                         At(at_target), Plain(message)
                     ]), target_message)
                 except:
-                    logger.error("发送消息出现未知错误！")
+                    logger.error("发送消息时发生未知错误！")
 
     @staticmethod
     def _message_decoding(data: str) -> Union[str, dict]:

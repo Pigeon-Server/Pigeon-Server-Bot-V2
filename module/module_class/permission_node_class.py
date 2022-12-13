@@ -246,9 +246,9 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                 }
             self.write_data()
         except:
-            return f"向{user_id}添加权限{permission}失败"
+            return f"向「{user_id}」添加权限“{permission}”失败"
         else:
-            return f"向{user_id}添加权限{permission}成功"
+            return f"成功为「{user_id}」添加权限”{permission}“"
 
     def remove_player_permission(self, user_id: str, permission: str) -> str:
         """
@@ -264,12 +264,12 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                 if permission in self.stored_data[user_id]["permission"]:
                     self.stored_data[user_id]["permission"].remove(permission)
                 else:
-                    return f"此用户没有{permission}权限"
+                    return f"此用户没有“{permission}”权限"
             self.write_data()
         except:
-            return f"移除{user_id}的权限{permission}失败"
+            return f"移除「{user_id}」的权限”{permission}“失败"
         else:
-            return f"移除{user_id}的权限{permission}成功"
+            return f"成功移除「{user_id}」权限“{permission}”"
 
     def check_player_permission(self, user_id: str, permission: str) -> bool:
         """
@@ -308,14 +308,14 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
         """
         try:
             if from_id not in self.stored_data.keys():
-                return f"无法查询到{from_id}的权限记录"
+                return f"无法查询到「{from_id}」的权限记录"
             else:
                 self.stored_data[to_id] = self.stored_data[from_id]
                 self.write_data()
         except:
-            return "克隆权限出现错误"
+            return "克隆权限时出现错误"
         else:
-            return f"成功将{from_id}的权限克隆到{to_id}"
+            return f"成功将「{from_id}」的权限克隆到「{to_id}」"
 
     def get_player_info(self, user_id: str) -> Optional[dict]:
         """
@@ -354,14 +354,14 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
         """
         try:
             if from_group not in self._group_permission.stored_data.keys():
-                return f"权限组{from_group}不存在"
+                return f"权限组「{from_group}」不存在"
             else:
                 self._group_permission.stored_data[to_group] = self._group_permission.stored_data[from_group]
                 self._group_permission.write_data()
         except:
-            return "克隆权限出现错误"
+            return "克隆权限时出现错误"
         else:
-            return f"成功将权限组{from_group}的权限克隆到{from_group}"
+            return f"成功将权限组「{from_group}」的权限克隆到「{from_group}」"
 
     def get_permission_node(self) -> list:
         """
@@ -391,9 +391,9 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                 }
             self._group_permission.write_data()
         except:
-            return f"向权限组{group_name}添加权限{permission}失败"
+            return f"向权限组「{group_name}」添加权限“{group_name}”失败"
         else:
-            return f"向权限组{group_name}添加权限{permission}成功"
+            return f"成功向权限组「{group_name}」添加权限”{permission}“"
 
     def remove_group_permission(self, group_name: str, permission: str) -> str:
         """
@@ -410,16 +410,16 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                     if permission in self._group_permission.stored_data[group_name]["permission"]:
                         self._group_permission.stored_data[group_name]["permission"].remove(permission)
                     else:
-                        return f"权限组{group_name}中没有权限{permission}"
+                        return f"权限组「{group_name}」未拥有“{permission}”权限"
                 else:
                     self._group_permission.stored_data[group_name]["permission"] = []
                 self._group_permission.write_data()
             else:
-                return f"无法查询到权限组{group_name}"
+                return f"权限组「{group_name}」不存在"
         except:
-            return f"移除权限组{group_name}的权限{permission}失败"
+            return f"移除权限组「{group_name}」的权限”{permission}“失败"
         else:
-            return f"移除权限组{group_name}的权限{permission}成功"
+            return f"成功移除权限组「{group_name}」权限“{permission}”"
 
     def check_group_permission(self, group_name: str, permission: str) -> bool:
         """
@@ -452,7 +452,7 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
         """
         try:
             if parent_group not in self._group_permission.stored_data.keys():
-                return f"无法找到权限组{parent_group}"
+                return f"权限组「{parent_group}」不存在"
             if group_name in self._group_permission.stored_data.keys():
                 if "parent" in self._group_permission.stored_data[group_name].keys():
                     self._group_permission.stored_data[group_name]["parent"].append(parent_group)
@@ -464,11 +464,11 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                     "parent": [parent_group]
                 }
                 self._group_permission.write_data()
-                return f"无法找到目标权限组{group_name},已自动创建"
+                return f"无法找到目标权限组「{group_name}」,已自动创建"
         except:
-            return f"向权限组{group_name}中添加父权限组{parent_group}失败"
+            return f"向权限组「{group_name}」添加父权限组「{parent_group}」失败"
         else:
-            return f"成功向权限组{group_name}中添加父权限组{parent_group}"
+            return f"成功为权限组「{group_name}」添加父权限组「{parent_group}」"
 
     def remove_group_parent(self, group_name: str, parent_group: str) -> str:
         """
@@ -481,19 +481,19 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
         """
         try:
             if parent_group not in self._group_permission.stored_data.keys():
-                return f"无法找到权限组{parent_group}"
+                return f"权限组「{parent_group}」不存在"
             if group_name in self._group_permission.stored_data.keys():
                 if "parent" in self._group_permission.stored_data[group_name]:
                     self._group_permission.stored_data[group_name]["parent"].remove(parent_group)
                     self._group_permission.write_data()
                 else:
-                    return f"权限组{group_name}没有父权限组"
+                    return f"权限组「{group_name}」还没有父权限组"
             else:
-                return f"无法找到权限组{group_name}"
+                return f"权限组「{group_name}」不存在"
         except:
-            return f"向权限组{group_name}中移除父权限组{parent_group}失败"
+            return f"移除权限组「{group_name}」父权限组「{parent_group}」失败"
         else:
-            return f"成功移除权限组{group_name}的父权限组{parent_group}"
+            return f"成功移除权限组「{group_name}」父权限组「{parent_group}」"
 
     def add_player_parent(self, user_id: str, parent_group: str) -> str:
         """
@@ -506,7 +506,7 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
         """
         try:
             if parent_group not in self._group_permission.stored_data.keys():
-                return f"无法找到权限组{parent_group}"
+                return f"权限组「{parent_group}」不存在"
             if user_id in self.stored_data.keys():
                 if "group" in self.stored_data[user_id].keys():
                     self.stored_data[user_id]["group"].append(parent_group)
@@ -520,9 +520,9 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                 self._group_permission.write_data()
                 return f"无法找到目标{user_id},已自动创建"
         except:
-            return f"向目标{user_id}添加权限组{parent_group}失败"
+            return f"向用户{user_id}添加权限组{parent_group}失败"
         else:
-            return f"向目标{user_id}添加权限组{parent_group}成功"
+            return f"向用户{user_id}添加权限组{parent_group}成功"
 
     def remove_player_parent(self, user_id: str, parent_group: str) -> str:
         """
@@ -535,19 +535,19 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
         """
         try:
             if parent_group not in self._group_permission.stored_data.keys():
-                return f"无法找到权限组{parent_group}"
+                return f"权限组「{parent_group}」不存在"
             if user_id in self.stored_data.keys():
                 if "group" in self.stored_data[user_id].keys():
                     self.stored_data[user_id]["group"].remove(parent_group)
                     self.write_data()
                 else:
-                    return f"目标{user_id}没有权限组"
+                    return f"用户「{user_id}」未被设置过权限组"
             else:
-                return f"无法找到目标{user_id}"
+                return f"无法找到用户：{user_id}"
         except:
-            return f"移除目标{user_id}权限组{parent_group}失败"
+            return f"移除用户「{user_id}」权限组{parent_group}失败"
         else:
-            return f"移除目标{user_id}权限组{parent_group}成功"
+            return f"移除用户「{user_id}」权限组{parent_group}成功"
 
     def del_group(self, group_name: str) -> str:
         """
@@ -562,11 +562,11 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                 del self._group_permission.stored_data[group_name]
                 self._group_permission.write_data()
             else:
-                return f"无法找到权限组{group_name}"
+                return f"权限组「{group_name}」不存在"
         except:
-            return f"删除权限组{group_name}失败"
+            return f"删除权限组「{group_name}」失败"
         else:
-            return f"删除权限组{group_name}成功"
+            return f"成功删除权限组：{group_name}"
 
     def del_player(self, user_id: str) -> str:
         """
@@ -581,11 +581,11 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                 del self.stored_data[user_id]
                 self.write_data()
             else:
-                return f"无法找到目标{user_id}"
+                return f"无法找到用户「{user_id}」"
         except:
-            return f"删除目标{user_id}失败"
+            return f"删除用户「{user_id}」失败"
         else:
-            return f"删除目标{user_id}成功"
+            return f"成功删除用户：{user_id}"
 
     def set_player_group(self, user_id: str, group_name: Union[str, list] = None) -> str:
         """
@@ -608,9 +608,9 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                     raise ValueError
                 self.write_data()
         except:
-            return f"设置{user_id}的权限组失效"
+            return f"设置「{user_id}」的权限组失败"
         else:
-            return f"设置{user_id}的权限组为{str(group_name)}"
+            return f"设置「{user_id}」的权限组为「{str(group_name)}」"
 
     def creat_group(self, group_name: str) -> str:
         """
@@ -626,9 +626,9 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                 "permission": []
             }
             self._group_permission.write_data()
-            return "创建成功"
+            return f"权限组「{group_name}」创建成功"
         else:
-            return "创建权限组是吧，权限组已存在"
+            return f"权限组「{group_name}」已存在"
 
     def creat_player(self, user_id: str, group: str = None) -> str:
         """
@@ -645,9 +645,9 @@ class PermissionClass(JsonDataBaseCLass, ConfigTools):
                 "permission": []
             }
             self.write_data()
-            return "创建成功"
+            return f"用户「{user_id}」添加成功"
         else:
-            return "创建失败,记录已存在"
+            return f"用户「{user_id}」已存在"
 
     @staticmethod
     def _permission_del(data: list) -> list:

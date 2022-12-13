@@ -64,9 +64,9 @@ class WhitelistClass():
                 cursor.execute(f"update wait set passinfo = '{reason}' where id = '{id_}'")
                 await message.send_admin_message("成功拒绝白名单")
                 if reason is None:
-                    await message.send_player_message("白名单申请被管理组拒绝", data[1])
+                    await message.send_player_message("您的白名单申请被管理组拒绝", data[1])
                 else:
-                    await message.send_player_message(f"白名单申请被管理组拒绝, 理由:{reason}", data[1])
+                    await message.send_player_message(f"您的白名单申请被管理组拒绝, 理由:{reason}", data[1])
                 logger.success(f"{data[2]}拒绝白名单成功")
             except:
                 logger.error("发生未知错误")
@@ -105,18 +105,18 @@ class WhitelistClass():
                 case 2:
                     await message.send_admin_message("操作已取消")
         else:
-            await message.send_admin_message("未查询到待审核玩家")
+            await message.send_admin_message("待审核列表为空~")
 
     async def change_name(self, new_name: str, account: str) -> None:
         ping_database()
         if cursor.execute(f"select * from wait where account = {account}"):
             data = cursor.fetchone()
             if data[2] == new_name:
-                await message.send_player_message("要修改的名字与原来相同")
+                await message.send_player_message("要修改的名字与原名相同")
             elif cursor.execute(f"select * from usedname where PlayerName = '{new_name}'"):
-                await message.send_player_message("此名称已被使用过了")
+                await message.send_player_message(f"{new_name}已被使用过了")
             elif cursor.execute(f"select * from wait where PlayerName = '{new_name}'"):
-                await message.send_player_message("此名称已被占用")
+                await message.send_player_message(f"{new_name}已被他人绑定")
             else:
                 match data[8]:
                     case "Java":
@@ -136,8 +136,7 @@ class WhitelistClass():
                             return True
 
                 if await interrupt.wait(wait_commit_player):
-                    await message.send_admin_message(f"玩家{data[2]}正在改名\n"
-                                                     f"新的玩家名为: {new_name}\n"
+                    await message.send_admin_message(f"有一个正在进行的改名操作：{data[2]} -> {new_name}\n"
                                                      f"是否同意？(是/否)")
 
                     @Filter(GroupMessage)
@@ -181,7 +180,7 @@ class WhitelistClass():
                             await message.send_admin_message("成功拒绝改名")
                             await message.send_player_message("改名申请被管理组拒绝", account)
         else:
-            await message.send_player_message("你的账户下没有查询到角色", account)
+            await message.send_player_message("您的账户下未绑定角色", account)
 
     @staticmethod
     async def _judge(id_: str) -> bool:
@@ -211,7 +210,7 @@ class WhitelistClass():
                             target_message=target_message)
                     case "QQ":
                         if data[1] != QQ:
-                            await message.send_player_message("此token不属于你！请不要使用他人的Token！此token已被锁定",
+                            await message.send_player_message("此token不属于你！请不要尝试使用他人的Token！此token已被锁定",
                                                               target_message=target_message)
                             cursor.execute(f"UPDATE wait SET locked = 1 where token = '{token}'")
                         else:
@@ -220,25 +219,30 @@ class WhitelistClass():
                                     await message.send_player_message("您的白名单申请正在审核中，请耐心等待",
                                                                       target_message=target_message)
                                 elif data[17]:
-                                    await message.send_player_message("您已获取过白名单",
+                                    await message.send_player_message("您已拥有白名单权限",
                                                                       target_message=target_message)
                                 else:
                                     await message.send_player_message(f"您的白名单申请被管理组拒绝\n原因：{data[18]}",
                                                                       target_message=target_message)
                             else:
-                                match data[8]:
-                                    case "Java":
-                                        await message.send_player_message("请确认您的游戏名及游戏版本:\n"
-                                                                          f"游戏名:{data[2][:16]}\n"
-                                                                          f"游戏版本:{data[8]}\n"
-                                                                          f"确认无误后请@机器人并回复\"确认\"",
-                                                                          target_message=target_message)
-                                    case "BE":
-                                        await message.send_player_message("请确认您的游戏名及游戏版本:\n"
-                                                                          f"游戏名:{('BE_' + data[2])[:16]}\n"
-                                                                          f"游戏版本:{data[8]}\n"
-                                                                          f"确认无误后请@机器人并回复\"确认\"",
-                                                                          target_message=target_message)
+                                await message.send_player_message("请确认您的游戏名及游戏版本:\n"
+                                                                  f"游戏名:{data[2][:16] if data[8] == 'Java' else ('BE_'+data[2][:16])}\n"
+                                                                  f"游戏版本:{data[8]}\n"
+                                                                  f"确认无误后请@机器人并回复\"确认\"",
+                                                                  target_message=target_message)
+                                # match data[8]:
+                                    # case "Java":
+                                    #     await message.send_player_message("请确认您的游戏名及游戏版本:\n"
+                                    #                                       f"游戏名:{data[2][:16]}\n"
+                                    #                                       f"游戏版本:{data[8]}\n"
+                                    #                                       f"确认无误后请@机器人并回复\"确认\"",
+                                    #                                       target_message=target_message)
+                                    # case "BE":
+                                    #     await message.send_player_message("请确认您的游戏名及游戏版本:\n"
+                                    #                                       f"游戏名:{('BE_' + data[2])[:16]}\n"
+                                    #                                       f"游戏版本:{data[8]}\n"
+                                    #                                       f"确认无误后请@机器人并回复\"确认\"",
+                                    #                                       target_message=target_message)
 
                                 @Filter(GroupMessage)
                                 def wait_commit(msg: GroupMessage):
@@ -259,6 +263,7 @@ class WhitelistClass():
                                                                      f"答题分数:{data[13]}\n"
                                                                      f"Token:{token}\n"
                                                                      f"个人简介:\n"
-                                                                     f"{data[9]}")
+                                                                     f"{data[9]}\n"
+                                                                     f"输入/pass {data[0]}以通过该请求")
         else:
-            await message.send_player_message("无法找到此Token，请确认Token是否正确", target_message=target_message)
+            await message.send_player_message("未能找到此Token，请检查是否正确", target_message=target_message)

@@ -16,14 +16,14 @@ class ConfigTools:
             object: 实例化对象
         """
         if not Path("config/" + filename).is_file():
-            logger.error(f"{filename}配置文件不存在")
+            logger.error(f"{filename}配置文件不存在，请按照{filename}.example创建并更名为{filename}")
         else:
             try:
                 return load(open(f"config/{filename}", "r", encoding="UTF-8",
                                  errors="ignore")) if obj_target is None else load(
                     open(f"config/{filename}", "r", encoding="UTF-8", errors="ignore"), object_hook=obj_target)
             except:
-                logger.error(f"{filename}已损坏")
+                logger.error(f"{filename}已损坏，请按照{filename}.example重新填写并更名为{filename}")
 
 
 class ConnectConfig:

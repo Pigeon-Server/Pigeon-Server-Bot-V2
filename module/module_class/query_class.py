@@ -12,4 +12,4 @@ class QueryClass:
                           f"玩家名: {raw[2]}\n"
             return output.removesuffix("\n")
         else:
-            return "未查询到待审核玩家"
+            return "待审核列表为空~"

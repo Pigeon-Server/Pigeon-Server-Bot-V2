@@ -72,11 +72,11 @@ class CosClass:  # Cos属于付费接口，尽量少调用
         try:
             self._client = CosS3Client(self._connect_config)
             self.connected = True
-            logger.success("成功连接到cos")
+            logger.success("成功连接到对象存储(cos)")
         except CosServiceError as error:
-            logger.error(f"连接cos失败: {error}")
+            logger.error(f"连接对象存储(cos)失败: {error}")
         except CosClientError as error:
-            logger.error(f"连接cos失败: {error}")
+            logger.error(f"连接对象存储(cos)失败: {error}")
 
     def upload_file(self, files: list, bucket: Optional[str] = None, path: Optional[str] = None, enable_md5: bool = False) -> list:
 

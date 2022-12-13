@@ -154,7 +154,6 @@ dmypy.json
 /config/module.json5
 /Test.json5
 /test.pyi
-/requirements.txt
 /test.*
 /config/permission.json5
 /data/MCSM.json
