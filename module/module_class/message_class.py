@@ -273,5 +273,6 @@ class Message:
             output.append(count)  # 推入映射Key
             count += 1  # 计数器递增
             data = data[data.find("}") + 1:]  # 切分字符串
+        output.append(data)
         result["location"] = output
         return result

@@ -6,7 +6,7 @@ if main_config.config_version not in ["0.1.1"]:
     logger.error("配置文件版本与当前程序所支持的版本不匹配！请检查")
     exit()
 
-if load(open(f"config/module.json5", "r", encoding="UTF-8", errors="ignore"))["debug_mode"]:
+if module_config.debug_mode:
     logger.warning("当前已开启Debug模式，可能会导致输出大量debug信息")
 
 from module.module_object.base import *

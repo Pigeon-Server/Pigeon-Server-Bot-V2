@@ -105,7 +105,7 @@ class WhitelistClass():
                 case 2:
                     await message.send_admin_message("操作已取消")
         else:
-            await message.send_admin_message("待审核列表为空~")
+            await message.send_admin_message("待审核列表为空")
 
     async def change_name(self, new_name: str, account: str) -> None:
         ping_database()
@@ -128,14 +128,14 @@ class WhitelistClass():
                             f"确认无误后@机器人并回复确认")
 
                 @Filter(GroupMessage)
-                def wait_commit_player(msg: GroupMessage):
+                def wait_player_commit(msg: GroupMessage):
                     if msg.message_chain.has(Plain):
                         if is_at_bot(msg.message_chain) and \
                                 msg.sender.id == account and "确认" in msg.message_chain.get_first(Plain).text \
                                 and is_player_group(msg.group.id):
                             return True
 
-                if await interrupt.wait(wait_commit_player):
+                if await interrupt.wait(wait_player_commit):
                     await message.send_admin_message(f"有一个正在进行的改名操作：{data[2]} -> {new_name}\n"
                                                      f"是否同意？(是/否)")
 
@@ -210,8 +210,9 @@ class WhitelistClass():
                             target_message=target_message)
                     case "QQ":
                         if data[1] != QQ:
-                            await message.send_player_message("此token不属于你！请不要尝试使用他人的Token！此token已被锁定",
-                                                              target_message=target_message)
+                            await message.send_player_message(
+                                "此token不属于你！请不要尝试使用他人的Token！此token已被锁定",
+                                target_message=target_message)
                             cursor.execute(f"UPDATE wait SET locked = 1 where token = '{token}'")
                         else:
                             if data[15]:
@@ -226,30 +227,18 @@ class WhitelistClass():
                                                                       target_message=target_message)
                             else:
                                 await message.send_player_message("请确认您的游戏名及游戏版本:\n"
-                                                                  f"游戏名:{data[2][:16] if data[8] == 'Java' else ('BE_'+data[2][:16])}\n"
+                                                                  f"游戏名:{data[2][:16] if data[8] == 'Java' else ('BE_' + data[2][:16])}\n"
                                                                   f"游戏版本:{data[8]}\n"
                                                                   f"确认无误后请@机器人并回复\"确认\"",
                                                                   target_message=target_message)
-                                # match data[8]:
-                                    # case "Java":
-                                    #     await message.send_player_message("请确认您的游戏名及游戏版本:\n"
-                                    #                                       f"游戏名:{data[2][:16]}\n"
-                                    #                                       f"游戏版本:{data[8]}\n"
-                                    #                                       f"确认无误后请@机器人并回复\"确认\"",
-                                    #                                       target_message=target_message)
-                                    # case "BE":
-                                    #     await message.send_player_message("请确认您的游戏名及游戏版本:\n"
-                                    #                                       f"游戏名:{('BE_' + data[2])[:16]}\n"
-                                    #                                       f"游戏版本:{data[8]}\n"
-                                    #                                       f"确认无误后请@机器人并回复\"确认\"",
-                                    #                                       target_message=target_message)
 
                                 @Filter(GroupMessage)
                                 def wait_commit(msg: GroupMessage):
                                     if msg.message_chain.has(Plain):
                                         if is_at_bot(msg.message_chain) and str(
-                                                msg.sender.id) == QQ and "确认" in msg.message_chain.get_first(
-                                            Plain).text and is_player_group(msg.group.id):
+                                                msg.sender.id) == QQ and \
+                                                "确认" in msg.message_chain.get_first(Plain).text \
+                                                and is_player_group(msg.group.id):
                                             return True
 
                                 if await interrupt.wait(wait_commit, timeout=300):
