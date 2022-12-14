@@ -14,7 +14,7 @@ class SocketClass:
         if host.startswith("ws://"):
             self._hostname = f"{host}:{port}"
         elif host.startswith("http://") or host.startswith("https://"):
-            raise WebsocketUrlError("websocket网址必须以'ws://'开头")
+            raise WebsocketUrlError("websocket链接必须以'ws://'开头")
         elif host.startswith("wss://"):
             raise WebsocketUrlError("暂时不支持wss")
 

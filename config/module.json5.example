@@ -11,5 +11,5 @@
   CheckMCUpdate: false,
   MCSMModule: false,
   TPS: false,
-  DebugMode: false
+  debug_mode: false
 }

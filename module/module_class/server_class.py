@@ -29,8 +29,8 @@ class MinecraftServer:
             if await rcon("list", host=self._rcon_host, port=self._rcon_port, passwd=self._rcon_password):
                 logger.success(f"成功连接到服务器{self.server_name}")
         except:
-            logger.error(f"连接到{self.server_name}时出错")
-            raise ConnectServerError(f"连接到服务器{self.server_name}出错")
+            logger.error(f"无法连接到{self.server_name}")
+            raise ConnectServerError(f"无法连接到{self.server_name}")
 
     async def server_run_command(self, command: str) -> Optional[str]:
         logger.debug(f"服务器{self.server_name}执行命令: {command}")
@@ -39,7 +39,7 @@ class MinecraftServer:
             logger.success(f"命令执行成功")
             return respond
         except:
-            logger.error(f"服务器{self.server_name}执行命令出错")
+            logger.error(f"服务器{self.server_name}执行命令时发生错误")
 
     async def add_whitelist(self, player_name: str) -> bool:
         if "whitelist" in self._command.keys():
@@ -53,7 +53,7 @@ class MinecraftServer:
                     else:
                         logger.error(f"服务器{self.server_name}添加{player_name}白名单失败")
                 except:
-                    logger.error(f"{self.server_name}: 执行命令时出错")
+                    logger.error(f"{self.server_name}: 执行命令时发生错误")
             else:
                 raise CommandNotFoundError("没有在Whitelist配置里面找到Add命令")
         else:
@@ -71,7 +71,7 @@ class MinecraftServer:
                     else:
                         logger.error(f"服务器{self.server_name}移除{player_name}白名单出现未知错误")
                 except:
-                    logger.error(f"{self.server_name}: 执行命令时出错")
+                    logger.error(f"{self.server_name}: 执行命令时发生错误")
             else:
                 raise CommandNotFoundError("没有在Whitelist配置里面找到Del命令")
         else:
@@ -89,7 +89,7 @@ class MinecraftServer:
                     else:
                         logger.error(f"服务器{self.server_name}封禁{player_name}发生错误")
                 except:
-                    logger.error(f"{self.server_name}: 执行命令出错")
+                    logger.error(f"{self.server_name}: 执行命令时发生错误")
             else:
                 raise CommandNotFoundError("没有在Ban配置里面找到Add命令")
         else:
@@ -107,7 +107,7 @@ class MinecraftServer:
                     else:
                         logger.error(f"服务器{self.server_name}解封{player_name}发生错误")
                 except:
-                    logger.error(f"{self.server_name}: 执行命令出错")
+                    logger.error(f"{self.server_name}: 执行命令时发生错误")
             else:
                 raise CommandNotFoundError("没有在Ban配置里面找到Del命令")
         else:

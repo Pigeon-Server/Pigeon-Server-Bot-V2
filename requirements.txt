@@ -1,0 +1,11 @@
+cos-python-sdk-v5
+json5
+loguru
+mcstatus
+PyMySQL
+rcon
+requests
+urllib3
+websockets
+yiri-mirai
+yiri-mirai-trigger
