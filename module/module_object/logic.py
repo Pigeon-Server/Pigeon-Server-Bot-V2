@@ -35,7 +35,7 @@ async def command_spy(event: GroupMessage, command: list):
     if commandLen > 0:
         if module_config.white_list:
             if not is_player_group(event.group.id):
-                await send(f"请前往原版群({main_config.mirai_bot_config.group_config.player_group})申请！")
+                await send(f"请前往原版群({main_config.mirai_bot_config.group_config.player_group})查看！")
             elif command[0] == "apply" or command[0] == "白名单":
                 if per.check_player_permission(event.sender.id, per.Whitelist.Apply):
                     match commandLen:
