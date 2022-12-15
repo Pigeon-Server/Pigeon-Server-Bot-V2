@@ -4,6 +4,7 @@ from typing import Optional, Union
 
 from requests import get
 
+from asyncio.tasks import sleep
 from module.module_base.logger import logger
 from module.module_class.exception_class import IncomingParametersError
 from module.module_class.json_database_class import JsonDataBaseCLass
@@ -356,25 +357,16 @@ class MCSMClass(JsonDataBaseCLass):
             logger.error(err)
             raise RuntimeError
         else:
-            tempList: list = []
+            temp_list: list = []
             time = strftime("[%H:%M:%S]", localtime(time_stamp))
-            data = data["data"].replace("\x1b[m//\r \r\x1b[34m", "") \
-                               .replace("\x1b[m/\r \r\x1b[34m", "") \
-                               .replace("\r \r\x1b[34m", "") \
-                               .replace("\x1b[36m", "") \
-                               .replace("\x1b[32m", "") \
-                               .replace("\x1b[0m", "") \
-                               .replace("\x1b[m", "") \
-                               .split("\n")[-20:]
+            data = data["data"].split('\n')
             for item in data:
-                if item[:10] == time and "[Server thread/INFO]" in item:
-                    tempList.append(item)
+                if time in item and "[Server thread/INFO]" in item:
+                    temp_list.append(item)
             res: str = ""
-            for raw in tempList:
+            for raw in temp_list:
                 if raw.find("]: ") != -1:
                     res += f"{raw[raw.find(']: ') + 3:]}\n"
-                elif raw.find(")") != -1:
-                    res += f"{raw[raw.find(')') + 2:]}\n"
             return res.removesuffix("\n")
 
     # 第二次封装
@@ -390,14 +382,16 @@ class MCSMClass(JsonDataBaseCLass):
         else:
             return res
 
-    def run_command(self, instance_name: str, remote_name: str, command: str) -> str:
+    async def run_command(self, instance_name: str, remote_name: str, command: str) -> str:
         res = self._check_name(remote_name, instance_name)
         if isinstance(res, bool):
             instance_uuid = self._translate_name_to_uuid(instance_name)
             remote_uuid = self._translate_name_to_uuid(remote_name)
             status = self._get_instance_info(remote_uuid, instance_uuid)
             if status == 3:
-                return self._get_command_output(instance_uuid, remote_uuid, self._command(instance_uuid, remote_uuid, command))
+                time_stamp = self._command(instance_uuid, remote_uuid, command)
+                await sleep(1)
+                return self._get_command_output(instance_uuid, remote_uuid, time_stamp)
             else:
                 return f"实例当前状态是:{self._status_code(status)},无法执行命令"
         else:
