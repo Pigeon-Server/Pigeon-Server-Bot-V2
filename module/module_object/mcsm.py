@@ -5,7 +5,7 @@ from module.module_interlining.bot import bot, message
 from module.module_base.config import main_config
 from mirai.models.api import GroupMessage
 from module.module_base.permission import per
-from module.module_interlining.useful_tools import is_player_group
+from module.module_interlining.useful_tools import is_player_group, segmentation_str
 
 MCSM.get_mcsm_info()
 
@@ -120,6 +120,6 @@ async def mcsm_command(event: GroupMessage):
                         cmd = ""
                         for x in range(3, commandLen):
                             cmd = cmd + command[x] + " "
-                        await send(await MCSM.run_command(command[1], command[2], cmd.removesuffix(" ")))
+                        await segmentation_str(send, await MCSM.run_command(command[1], command[2], cmd.removesuffix(" ")))
                     else:
                         await send("你无权这么做")

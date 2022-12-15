@@ -25,7 +25,7 @@ async def command_spy(event: GroupMessage, command: list):
 
     async def send(msg, target=None):
         if target is not None:
-            await message.send_message(event.group.id, msg, event.group.name, target)
+            await message.send_message(event.group.id, msg, event.group.name, target_message=target)
         else:
             await message.send_message(event.group.id, msg, event.group.name)
 
@@ -34,9 +34,10 @@ async def command_spy(event: GroupMessage, command: list):
     per.creat_player(str(event.sender.id), main_config.permission.default if is_player_group(event.group.id) else main_config.permission.common)
     if commandLen > 0:
         if module_config.white_list:
-            if not is_player_group(event.group.id):
-                await send(f"请前往原版群({main_config.mirai_bot_config.group_config.player_group})申请！")
-            elif command[0] == "apply" or command[0] == "白名单":
+            if command[0] == "apply" or command[0] == "白名单":
+                if not is_player_group(event.group.id):
+                    await send(f"请前往原版群({main_config.mirai_bot_config.group_config.player_group})申请！")
+                    return
                 if per.check_player_permission(event.sender.id, per.Whitelist.Apply):
                     match commandLen:
                         case 1:
@@ -57,6 +58,9 @@ async def command_spy(event: GroupMessage, command: list):
                     await send("你无权这么做")
                 return
             elif command[0] == "change" or command[0] == "改名":
+                if not is_player_group(event.group.id):
+                    await send(f"请前往原版群({main_config.mirai_bot_config.group_config.player_group})！")
+                    return
                 if per.check_player_permission(event.sender.id, per.Whitelist.Change):
                     if commandLen == 2:
                         if rematch('^\\w+$', command[1]) is None or len(command[1]) < 4 or len(command[1]) > 16:
@@ -67,6 +71,9 @@ async def command_spy(event: GroupMessage, command: list):
                     await send("你无权这么做")
                 return
             elif command[0] == "token":
+                if not is_player_group(event.group.id):
+                    await send(f"请前往原版群({main_config.mirai_bot_config.group_config.player_group})！")
+                    return
                 if per.check_player_permission(event.sender.id, per.Token.Check):
                     ping_database()
                     if cursor.execute(f"select * from wait where account = {event.sender.id}"):
@@ -152,9 +159,10 @@ async def command_spy(event: GroupMessage, command: list):
                     await send("你无权这么做")
                 return
         if module_config.black_list:
-            if not is_player_group(event.group.id):
-                await send(f"请前往原版群({main_config.mirai_bot_config.group_config.player_group})申请！")
-            elif command[0] == "blacklist" or command[0] == "黑名单":
+            if command[0] == "blacklist" or command[0] == "黑名单":
+                if not is_player_group(event.group.id):
+                    await send(f"请前往原版群({main_config.mirai_bot_config.group_config.player_group})！")
+                    return
                 if commandLen == 1:
                     if per.check_player_permission(event.sender.id, per.Blacklist.List):
                         ping_database()
