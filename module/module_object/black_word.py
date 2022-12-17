@@ -39,12 +39,12 @@ async def clear():
 
 @Filter(GroupMessage)
 def blocking_word_spy(event: GroupMessage):
-    msg: str = str(event.message_chain)
+    msg: str = str(event.message_chain).lower()
     if is_admin_group(event.group.id):
         return False
     if event.sender.permission.value == "MEMBER":  # 如果成员不是管理员或者群主
         for raw in blocking_word_list:  # 遍历屏蔽名单
-            if rematch(raw, msg) is not None:  # 如果有匹配返回true
+            if rematch(raw.lower(), msg) is not None:  # 如果有匹配返回true
                 return True
         return False
 
