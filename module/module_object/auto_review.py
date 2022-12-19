@@ -32,6 +32,7 @@ async def review_join(event: MemberJoinRequestEvent):
                f"入群信息：\n{event.message}\n" \
                f"个性签名: {member_info.sign}\n" \
                "处理结果：{result}"
+        count += 1
         if str(group_id) in list(vars(main_config.automatic_config).keys()):
             GAAConfig: GroupUnit = vars(main_config.automatic_config)[str(group_id)]
             Refuse = None
@@ -75,7 +76,7 @@ async def review_join(event: MemberJoinRequestEvent):
                         }
                     if is_admin_group(msg.group.id):
                         res = str(msg.message_chain).rsplit(" ")
-                        if len(res) < 2 or res[1] != temp:
+                        if len(res) < 2 or res[1] != str(temp):
                             return
                         if res[0] == "同意":
                             return {
@@ -176,12 +177,12 @@ async def review_join(event: MemberJoinRequestEvent):
                 # 进群问答
                 elif GAAConfig.audit_config.pass_config.join_group_answer_keyword_review:
                     if check_answer(event.message.lower()):
-                        for key, value in vars(
-                                GAAConfig.keyword_config.join_group_answer_keyword.refuse_keywords).values():
-                            if key in event.message.lower():
+                        temp = vars(GAAConfig.keyword_config.join_group_answer_keyword.refuse_keywords)
+                        for key in temp.keys():
+                            if temp[key] in event.message.lower():
                                 Refuse = {
                                     "error_code": 2.1,
-                                    "error_msg": str(value),
+                                    "error_msg": str(temp[key]),
                                     "ban": False
                                 }
                                 break
