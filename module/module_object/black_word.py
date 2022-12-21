@@ -54,7 +54,7 @@ async def blocking_word(event: GroupMessage, recall: bool):
     if recall:
         await message.recall(event.message_chain.message_id)  # 撤回
         await message.mute(event.group.id, event.sender.id, check_time(str(event.sender.id)))
-        await message.send_message(event.group.id, "触发违禁词，已撤回消息", event.group.name, event.sender.id)
+        await message.send_message(event.group.id, "你好像说了什么不得了的话呢~", event.group.name, event.sender.id)
 
 
 dataDict = {}

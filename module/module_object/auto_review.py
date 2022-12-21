@@ -160,7 +160,7 @@ async def review_join(event: MemberJoinRequestEvent):
                 await send_info("该群所有人都能进入，已自动同意")
             else:
                 # QQ等级判断
-                if member_info.level < GAAConfig.audit_config.pass_config.pass_min_level:
+                if GAAConfig.audit_config.pass_config.pass_min_level != 0 and member_info.level < GAAConfig.audit_config.pass_config.pass_min_level:
                     Refuse = {
                         "error_code": 0,
                         "error_msg": "QQ等级未满足要求",
@@ -169,7 +169,7 @@ async def review_join(event: MemberJoinRequestEvent):
                     await final_step()
                     return
                 # 年龄判断
-                if member_info.age < GAAConfig.audit_config.pass_config.pass_min_age:
+                if GAAConfig.audit_config.pass_config.pass_min_age != 0 and member_info.age < GAAConfig.audit_config.pass_config.pass_min_age:
                     Refuse = {
                         "error_code": 1,
                         "error_msg": "年龄未满足要求",
@@ -179,17 +179,18 @@ async def review_join(event: MemberJoinRequestEvent):
                     return
                 # 进群问答
                 if GAAConfig.audit_config.pass_config.join_group_answer_keyword_review:
-                    temp_ = vars(GAAConfig.keyword_config.join_group_answer_keyword.refuse_keywords)
-                    for key in temp_.keys():
-                        if temp_[key] in event.message.lower():
+                    # temp_ = vars(GAAConfig.keyword_config.join_group_answer_keyword.refuse_keywords)
+                    event.message = event.message.lower()
+                    for key, value in vars(GAAConfig.keyword_config.join_group_answer_keyword.refuse_keywords).items():
+                        if key in event.message:
                             Refuse = {
                                 "error_code": 2.1,
-                                "error_msg": str(temp_[key]),
+                                "error_msg": str(value),
                                 "ban": False
                             }
                             await final_step()
                             return
-                    if not check_answer(event.message.lower()):
+                    if not check_answer(event.message):
                         Refuse = {
                             "error_code": 2.2,
                             "error_msg": "未能解析的进群原因",
@@ -203,7 +204,7 @@ async def review_join(event: MemberJoinRequestEvent):
                         if item in member_info.sign:
                             Refuse = {
                                 "error_code": 3,
-                                "error_msg": "签名有违规字符",
+                                "error_msg": "签名中有含有违规字符",
                                 "ban": True
                             }
                             await final_step()
