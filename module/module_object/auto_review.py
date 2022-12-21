@@ -31,7 +31,9 @@ async def review_join(event: MemberJoinRequestEvent):
                f"年龄: {member_info.age}\n" \
                f"入群信息：\n{event.message}\n" \
                f"个性签名: {member_info.sign}\n" \
-               "处理结果：{result}"
+               "处理结果：{result}\n" \
+               "处理详情: {info}"
+        count += 1
         if str(group_id) in list(vars(main_config.automatic_config).keys()):
             GAAConfig: GroupUnit = vars(main_config.automatic_config)[str(group_id)]
             Refuse = None
@@ -40,7 +42,7 @@ async def review_join(event: MemberJoinRequestEvent):
                 await message.send_admin_message(send.format(
                     groupName=message.player_name if is_player_group(group_id) else (
                         await bot.get_group(group_id)).name,
-                    result=result))
+                    result=result, info="核验通过" if Refuse is None else Refuse["error_msg"]))
 
             def check_answer(msg: str) -> bool:
                 for _key in GAAConfig.keyword_config.join_group_answer_keyword.pass_keywords:
@@ -75,7 +77,7 @@ async def review_join(event: MemberJoinRequestEvent):
                         }
                     if is_admin_group(msg.group.id):
                         res = str(msg.message_chain).rsplit(" ")
-                        if len(res) < 2 or res[1] != temp:
+                        if len(res) < 2 or res[1] != str(temp):
                             return
                         if res[0] == "同意":
                             return {
@@ -123,7 +125,7 @@ async def review_join(event: MemberJoinRequestEvent):
                                                                      f"拒绝理由为:{data['message']}")
                             else:
                                 try:
-                                    await bot.decline(event)
+                                    await bot.decline(event, Refuse["error_msg"])
                                 except:
                                     await message.send_admin_message("出现未知错误")
                                 else:
@@ -139,7 +141,7 @@ async def review_join(event: MemberJoinRequestEvent):
                                                                      f"拒绝理由为:{data['message']}")
                             else:
                                 try:
-                                    await bot.decline(event, ban=True)
+                                    await bot.decline(event, Refuse["error_msg"], ban=True)
                                 except:
                                     await message.send_admin_message("出现未知错误")
                                 else:
@@ -162,39 +164,41 @@ async def review_join(event: MemberJoinRequestEvent):
                     Refuse = {
                         "error_code": 0,
                         "error_msg": "QQ等级未满足要求",
-                        "ban": True
+                        "ban": False
                     }
                     await final_step()
+                    return
                 # 年龄判断
-                elif member_info.age < GAAConfig.audit_config.pass_config.pass_min_age:
+                if member_info.age < GAAConfig.audit_config.pass_config.pass_min_age:
                     Refuse = {
                         "error_code": 1,
                         "error_msg": "年龄未满足要求",
-                        "ban": True
+                        "ban": False
                     }
                     await final_step()
+                    return
                 # 进群问答
-                elif GAAConfig.audit_config.pass_config.join_group_answer_keyword_review:
-                    if check_answer(event.message.lower()):
-                        for key, value in vars(
-                                GAAConfig.keyword_config.join_group_answer_keyword.refuse_keywords).values():
-                            if key in event.message.lower():
-                                Refuse = {
-                                    "error_code": 2.1,
-                                    "error_msg": str(value),
-                                    "ban": False
-                                }
-                                break
-                        await final_step()
-                    else:
+                if GAAConfig.audit_config.pass_config.join_group_answer_keyword_review:
+                    temp_ = vars(GAAConfig.keyword_config.join_group_answer_keyword.refuse_keywords)
+                    for key in temp_.keys():
+                        if temp_[key] in event.message.lower():
+                            Refuse = {
+                                "error_code": 2.1,
+                                "error_msg": str(temp_[key]),
+                                "ban": False
+                            }
+                            await final_step()
+                            return
+                    if not check_answer(event.message.lower()):
                         Refuse = {
                             "error_code": 2.2,
                             "error_msg": "未能解析的进群原因",
                             "ban": False
                         }
                         await final_step()
+                        return
                 # QQ签名
-                elif GAAConfig.audit_config.pass_config.signature_refuse_keyword:
+                if GAAConfig.audit_config.pass_config.signature_refuse_keyword:
                     for item in GAAConfig.keyword_config.signature_refuse_keyword:
                         if item in member_info.sign:
                             Refuse = {
@@ -202,5 +206,6 @@ async def review_join(event: MemberJoinRequestEvent):
                                 "error_msg": "签名有违规字符",
                                 "ban": True
                             }
-                            break
-                    await final_step()
+                            await final_step()
+                            return
+                await final_step()
