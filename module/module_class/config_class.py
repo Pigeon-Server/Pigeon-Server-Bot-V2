@@ -39,7 +39,7 @@ class CosConfig:
     bucket: str
     path: str
     enable_agent: bool
-    agent_address: bool
+    agent_address: dict
     connect_config: ConnectConfig
 
 
@@ -132,7 +132,7 @@ class ConfigInit:
     welcome_message: str
     mcsm_config: MCSMConfig
     permission: Permission
-    automatic_config: dict[object]
+    automatic_config: dict[GroupUnit]
 
     def __init__(self, json):
         self.__dict__ = json

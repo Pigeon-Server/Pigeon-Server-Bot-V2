@@ -9,7 +9,7 @@ from mirai.models.events import GroupMessage
 @bot.on(GroupMessage)
 async def image_review(event: GroupMessage):
     if event.message_chain.has(Image):  # 如果消息链里面有Image消息
-        await download_file(list(image.url for image in event.message_chain.get(Image)), "image", True,
+        await download_file(list(image.url for image in event.message_chain.get(Image)), "image",
                             lambda recall: message.recall_and_mute(event, recall),
                             lambda fileList: cos_client.upload_file(fileList,
                                                                     enable_md5=True) if cos_client.connected else None)

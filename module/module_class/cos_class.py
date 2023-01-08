@@ -2,8 +2,8 @@ from module.module_base.logger import logger
 from qcloud_cos import CosConfig, CosS3Client
 from qcloud_cos.cos_exception import CosClientError, CosServiceError
 from module.module_class.exception_class import IncomingParametersError, NoKeyError
-from os.path import exists, split, join
-from typing import Optional, List
+from os.path import exists
+from typing import Optional, List, Union
 from module.module_base.config import image_list
 
 
@@ -91,35 +91,41 @@ class CosClass:  # Cos属于付费接口，尽量少调用
 
         bucket = self._bucket if bucket is None else bucket
         path = self._path if path is None else path
-        SuccessList: list = []
+        success_list: list = []
         if not isinstance(files, list):
             raise IncomingParametersError("传入的files参数不是一个列表")
         for file in files:
             if exists(file):  # 判断本地文件是否存在
-                if not self._client.object_exists(bucket, Key=f"{path}/{split(file)[-1]}"):  # 判断Cos上是否存在该文件
+                temp = "\\"
+                file_name = f"{path}/{file.split(temp)[-1]}"
+                if not self._client.object_exists(bucket, Key=file_name):  # 判断Cos上是否存在该文件
                     for i in range(0, 3):  # 使用高级接口断点续传，失败重试时不会上传已成功的分块(这里重试3次)
                         try:
-                            response = self._client.upload_file(
+                            self._client.upload_file(
                                 Bucket=bucket,
                                 LocalFilePath=file,  # 本地文件的路径
-                                Key=f"{path}/{split(file)[-1]}",  # 上传到桶之后的文件名
+                                Key=file_name,  # 上传到桶之后的文件名
                                 PartSize=1,  # 分块大小
                                 MAXThread=10,  # 支持最多的线程数
                                 EnableMD5=enable_md5  # 是否计算md5
                             )
-                            logger.debug(response['ETag'])
-                            SuccessList.append(join(path, file.rsplit("/")[-1]))
-                            image_list.edit_data(split(file)[-1], "Wait")
+                            logger.debug(f"{file_name}上传成功")
                             break
                         except CosClientError or CosServiceError as err:
                             logger.error(f"第[{i}]次上传文件发生错误：{err}")
                 else:
                     logger.info(f"{file}已在Cos存在")
+                success_list.append(file_name)
+                if "Wait" in image_list.stored_data.keys():
+                    image_list.stored_data["Wait"].append(file.split('\\')[-1])
+                else:
+                    image_list.stored_data["Wait"] = [file.split('\\')[-1]]
+                image_list.write_data()
             else:
                 logger.error("文件不存在：" + file)
-        return SuccessList
+        return success_list
 
-    def del_file(self, bucket: str, files: list, version_id: Optional[str] = None) -> list:
+    def del_file(self, files: list, bucket: str = None, version_id: Optional[str] = None) -> list:
 
         """
         删除cos中的文件\n
@@ -131,26 +137,26 @@ class CosClass:  # Cos属于付费接口，尽量少调用
 
         bucket = self._bucket if bucket is None else bucket
         SuccessList: list = []
-        for file in files:
-            respond = self._client.delete_object(
-                Bucket=bucket,
-                Key=file
-            ) if version_id is None else self._client.delete_object(
-                Bucket=bucket,
-                Key=file,
-                VersionId=version_id
-            )
-            if respond.get("x-cos-delete-marker"):
+        try:
+            for file in files:
+                respond = self._client.delete_object(
+                    Bucket=bucket,
+                    Key=file
+                ) if version_id is None else self._client.delete_object(
+                    Bucket=bucket,
+                    Key=file,
+                    VersionId=version_id
+                )
                 SuccessList.append(file)
                 if version_id is True:
                     logger.debug(f"删除{file}成功，版本：{respond.get('x-cos-version-id')}")
                 else:
                     logger.debug(f"删除{file}成功")
-            else:
-                logger.debug(f"删除{file}失败")
+        except:
+            logger.error(f"删除文件出错")
         return SuccessList
 
-    def get_file_url(self, file, bucket: Optional[str] = None):
+    def get_file_url(self, file, bucket: Optional[str] = None) -> Union[str, bool]:
 
         """
         获取存储桶中文件访问URL
@@ -165,7 +171,7 @@ class CosClass:  # Cos属于付费接口，尽量少调用
         else:
             return False
 
-    async def files_content_recognition(self, files: list, biz_type: str, interval: int = 3, max_frames: int = 5,
+    async def files_content_recognition(self, files: list[str], biz_type: str, interval: int = 3, max_frames: int = 5,
                                         bucket: Optional[str] = None, compression: bool = False, callback=None) -> Optional[str]:
         """
         审核图片\n
@@ -182,42 +188,65 @@ class CosClass:  # Cos属于付费接口，尽量少调用
         """
         bucket = self._bucket if bucket is None else bucket
         compression = 1 if compression else 0
-        inputData: List[dict] = []
-        for fileName in files:
-            if fileName[:4] == "http":
-                inputData.append({
-                    'Url': fileName,
+        input_data: List[dict] = []
+        for file_name in files:
+            if file_name.startswith("http"):
+                input_data.append({
+                    'Url': file_name,
                     'Interval': interval,
                     'MaxFrames': max_frames,
                     'LargeImageDetect': compression
                 })
             else:
-                inputData.append({
-                    'module_object': f"{self._path}/{fileName}",
+                input_data.append({
+                    'Object': f"{self._path}/{file_name}",
                     'Interval': interval,
                     'MaxFrames': max_frames,
                     'LargeImageDetect': compression
                 })
         try:
-            for item in self._client.ci_auditing_image_batch(Bucket=bucket, BizType=biz_type, Input=inputData)["JobsDetail"]:
-                if "Url" in item.keys():
-                    FileName = item["Url"][len(item["Url"])-33-len(item["Url"].split(".")[1]):]
-                elif "module_object" in item.keys():
-                    FileName = item["module_object"][len(item["module_object"]) - 33 - len(item["module_object"].split(".")[1]):]
+            for item in self._client.ci_auditing_image_batch(Bucket=bucket, BizType=biz_type, Input=input_data)["JobsDetail"]:
+                if "Object" in item.keys():
+                    file_name = item["Object"].split('/')[-1]
+                    image_list.edit_data(file_name, "Wait", del_data=True)
+                    logger.debug(file_name)
+                    logger.debug("识别状态：" + item["State"])
+                    logger.debug("识别标签：" + item["Label"])
+                    logger.debug("识别结果：" + item["Result"])
+                    logger.debug("置信度：" + item["Score"])
+                    if item["State"] != 'Success':
+                        logger.error(f"图片审核失败,图片名:{file_name}")
+                    if item["Result"] == '1' or (item["Result"] == '2' and int(item["Score"]) >= 60):
+                        logger.debug(f"图片违规，图片名:{file_name}")
+                        if "Wait" in image_list.stored_data.keys():
+                            image_list.stored_data["NoPass"].append(file_name)
+                        else:
+                            image_list.stored_data["NoPass"] = [file_name]
+                        image_list.write_data()
+                        return "违规图片" if callback is None else await callback("违规图片")
+                    if "Wait" in image_list.stored_data.keys():
+                        image_list.stored_data["Pass"].append(file_name)
+                    else:
+                        image_list.stored_data["Pass"] = [file_name]
+                    image_list.write_data()
+                    logger.debug(f"图片审核通过，图片名：{file_name}")
+                elif "Url" in item.keys():
+                    file_name = item["Url"]
+                    logger.debug(file_name)
+                    logger.debug(item["Label"])
+                    logger.debug(item["Result"])
+                    logger.debug(item["Score"])
+                    if item["State"] != 'Success':
+                        logger.error(f"图片审核失败,URL链接为:{file_name}")
+                    if item["Result"] == '1' or (item["Result"] == '2' and item["Score"] >= 60):
+                        logger.debug(f"图片违规，URL链接为:{file_name}")
+                        return "违规图片"
+                    logger.debug(f"图片审核通过，URL链接为：{file_name}")
                 else:
                     logger.error("图片识别返回值出错")
                     return None
-                logger.debug(FileName)
-                logger.debug(item["Label"])
-                logger.debug(item["Result"])
-                logger.debug(item["Score"])
-                image_list.edit_data(FileName, "Wait", del_data=True)
-                if item["Result"] == '1' or (item["Result"] == '2' and item["Score"] >= 60):
-                    logger.debug("违规")
-                    image_list.edit_data(FileName, "NoPass")
-                    return "违规图片" if callback is None else await callback("违规图片")
-                image_list.edit_data(FileName, "Pass")
-        except:
+        except Exception as err:
+            logger.error(err)
             logger.error("图片识别出现错误")
             return None
 

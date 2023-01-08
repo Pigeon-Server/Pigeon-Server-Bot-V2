@@ -80,24 +80,20 @@ class JsonDataBaseCLass:
                         raise RuntimeError("不支持此类修改")
         if DataType(self._data_type) == DataType.DICT:
             try:
-                with open(f"data/{self._database_name}", 'w', encoding="UTF-8") as file:
-                    file.write(dumps(self.stored_data, indent=4, ensure_ascii=False))
+                self.write_data()
                 return True
             except:
                 self.stored_data = backupData
-                with open(f"data/{self._database_name}", 'w', encoding="UTF-8") as file:
-                    file.write(dumps(self.stored_data, indent=4, ensure_ascii=False))
+                self.write_data()
                 return False
         else:
             try:
                 self.stored_data.remove(data) if del_data else self.stored_data.append(data)
-                with open(f"data/{self._database_name}", 'w', encoding="UTF-8") as file:
-                    file.write(dumps(self.stored_data, indent=4, ensure_ascii=False))
+                self.write_data()
                 return True
             except:
                 self.stored_data = backupData
-                with open(f"data/{self._database_name}", 'w', encoding="UTF-8") as file:
-                    file.write(dumps(self.stored_data, indent=4, ensure_ascii=False))
+                self.write_data()
                 return False
 
     def reload_data(self) -> None:

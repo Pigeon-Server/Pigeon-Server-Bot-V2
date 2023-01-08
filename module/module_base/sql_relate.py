@@ -64,4 +64,3 @@ if cursor.execute("show tables") < 4:
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3""")
 
     logger.success("数据表创建完成")
-

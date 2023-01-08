@@ -93,17 +93,18 @@ class Message:
         except:
             logger.error("发送消息时发生错误")
 
-    async def recall_and_mute(self, event: GroupMessage, send_message: str) -> None:
+    async def recall_and_mute(self, event: GroupMessage, send_message: str = None) -> None:
         """
         撤回消息并禁言\n
         Args:
             event : 传入群消息事件
             send_message: 要发送的消息
         """
-        if send_message is not None and event.sender.permission == "MEMBER":
-            await self.mute(event.group.id, event.sender.id)
-            await self.recall(event.message_chain.message_id)
+        if send_message is not None:
             await self.send_message(event.group.id, send_message, event.group.name, at_target=event.sender.id)
+            if event.sender.permission == "MEMBER":
+                await self.mute(event.group.id, event.sender.id)
+                await self.recall(event.message_chain.message_id)
 
     async def recall(self, target_message: int) -> None:
         """

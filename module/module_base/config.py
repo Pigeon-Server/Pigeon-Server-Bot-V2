@@ -51,9 +51,3 @@ except Exception as error:
     logger.error(error)
     logger.error("配置文件加载出错，正在退出")
     exit()
-
-
-
-
-
-

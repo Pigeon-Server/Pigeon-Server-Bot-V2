@@ -7,7 +7,7 @@ from filetype import guess
 from hashlib import md5
 from module.module_base.logger import logger
 from os.path import exists, join
-from typing import Union
+from typing import Union, Optional
 if module_config.image_review:
     from module.module_base.config import image_list
 from re import match as rematch
@@ -182,20 +182,19 @@ def judge_token(id_: int) -> dict:
         }
 
 
-async def download_file(urls: list, path: str, file_name: Union[list, bool], recall, callback=None) -> Union[list, None]:
+async def download_file(urls: list, path: str, recall, callback=None) -> Optional[list]:
 
     """
     从url下载文件\n
     Args:
         urls: 文件列表
         path: 保存的目录
-        file_name: 文件名
         recall: 撤回回调函数
         callback: 回调函数,可为空
     """
 
     success_list: list = []
-    for index, url in enumerate(urls, 0):
+    for url in urls:
         try:
             logger.debug("准备下载文件，URL：" + url)
             fileio = get(url)
@@ -203,33 +202,28 @@ async def download_file(urls: list, path: str, file_name: Union[list, bool], rec
             logger.error("下载失败，URL：" + url)
         else:
             file_type = guess(fileio.content)  # 文件类型识别
-            if isinstance(file_name, bool) and file_name:
-                file_md5 = md5(fileio.content).hexdigest()  # md5生成
-                if file_type:  # 文件名拼接
-                    file_name = join(path, f"{file_md5}.{file_type.extension}")
-                else:
-                    file_name = join(path, file_md5)
-                if image_list.query_data(f"{file_md5}.{file_type.extension}", "NoPass"):
-                    logger.debug("已记录为违规图片，撤回")
-                    return await recall("违规图片")
-                if not exists(file_name):
-                    if image_list.query_data(f"{file_md5}.{file_type.extension}", "Pass"):
-                        logger.debug("已判断通过,不保存")
-                        continue
-                    success_list.append(file_name)
-                    open(file_name, "wb").write(fileio.content)
-                    logger.debug(f"文件保存为{file_name}")
-                fileio.close()
+            file_md5 = md5(fileio.content).hexdigest()  # md5生成
+            if file_type:  # 文件名拼接
+                file_name = join(path, f"{file_md5}.{file_type.extension}")
             else:
-                if file_type:  # 文件名拼接
-                    file_name = join(path, f"{file_name[index]}.{file_type.extension}")
-                else:
-                    file_name = join(path, file_name[index])
-                if not exists(file_name):
-                    success_list.append(file_name)
+                file_name = join(path, file_md5)
+            if f"{file_md5}.{file_type.extension}" in image_list.stored_data["NoPass"]:
+                logger.debug(f"{file_name}已记录为违规图片，撤回")
+                return await recall("违规图片")
+            if f"{file_md5}.{file_type.extension}" in image_list.stored_data["Pass"]:
+                logger.debug(f"{file_name}已判断通过,不保存")
+                continue
+            if not exists(file_name):
+                try:
                     open(file_name, "wb").write(fileio.content)
+                except:
+                    logger.error(f"保存文件{file_name}失败")
+                else:
+                    success_list.append(file_name)
                     logger.debug(f"文件保存为{file_name}")
-                fileio.close()
+            else:
+                logger.debug(f"{file_name}文件已存在")
+            fileio.close()
     return success_list if callback is None else callback(success_list)
 
 

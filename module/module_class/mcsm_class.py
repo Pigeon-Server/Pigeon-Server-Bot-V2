@@ -1,9 +1,7 @@
 from sys import exit
 from time import strftime, localtime
 from typing import Optional, Union
-
 from requests import get
-
 from asyncio.tasks import sleep
 from module.module_base.logger import logger
 from module.module_class.exception_class import IncomingParametersError
