@@ -1,6 +1,6 @@
 from mirai.models.events import MemberJoinRequestEvent, GroupMessage, MemberJoinEvent
 from mirai_extensions.trigger import Filter
-
+from re import match as rematch
 from module.module_base.config import main_config
 from module.module_interlining.bot import bot, message, interrupt
 from module.module_interlining.useful_tools import is_admin_group, is_player_group
@@ -179,17 +179,28 @@ async def review_join(event: MemberJoinRequestEvent):
                     return
                 # 进群问答
                 if GAAConfig.audit_config.pass_config.join_group_answer_keyword_review:
-                    # temp_ = vars(GAAConfig.keyword_config.join_group_answer_keyword.refuse_keywords)
                     event.message = event.message.lower()
                     for key, value in vars(GAAConfig.keyword_config.join_group_answer_keyword.refuse_keywords).items():
-                        if key in event.message:
-                            Refuse = {
-                                "error_code": 2.1,
-                                "error_msg": str(value),
-                                "ban": False
-                            }
-                            await final_step()
-                            return
+                        if rematch('^.*\|.*[^|]$', key):  # 列表处理
+                            key = key.split("|")
+                            for item in key:
+                                if item.lower() in event.message:
+                                    Refuse = {
+                                        "error_code": 2.1,
+                                        "error_msg": str(value),
+                                        "ban": False
+                                    }
+                                    await final_step()
+                                    return
+                        else:
+                            if key.lower() in event.message:
+                                Refuse = {
+                                    "error_code": 2.1,
+                                    "error_msg": str(value),
+                                    "ban": False
+                                }
+                                await final_step()
+                                return
                     if not check_answer(event.message):
                         Refuse = {
                             "error_code": 2.2,
@@ -201,7 +212,7 @@ async def review_join(event: MemberJoinRequestEvent):
                 # QQ签名
                 if GAAConfig.audit_config.pass_config.signature_refuse_keyword:
                     for item in GAAConfig.keyword_config.signature_refuse_keyword:
-                        if item in member_info.sign:
+                        if item.lower() in member_info.sign.lower():
                             Refuse = {
                                 "error_code": 3,
                                 "error_msg": "签名中有含有违规字符",
