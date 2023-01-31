@@ -14,7 +14,7 @@ def shutup_spy(event: GroupMessage):
 
 
 @control.on(shutup_spy)
-async def shutup(event: GroupMessage, execute: bool):
+async def Shutup(event: GroupMessage, execute: bool):
     if execute:
         if per.check_player_permission(event.sender.id, per.Question.shutup):
             if event.sender.id in except_list.stored_data:
