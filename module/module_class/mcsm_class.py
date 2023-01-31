@@ -79,7 +79,7 @@ class MCSMClass(JsonDataBaseCLass):
             else:
                 raise ValueError("请求参数错误！")
         if log:
-            logger.debug(f"尝试请求api{url}")
+            logger.debug(f"尝试请求api：{url}")
         res = get(url=url, headers={"Content-Type": "application/json; charset=utf-8"},
                   params=parameter, timeout=10, verify=self._enable_SSL).json()
         match res.get("status"):
