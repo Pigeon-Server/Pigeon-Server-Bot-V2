@@ -11,7 +11,7 @@ from module.module_base.permission import per
 from module.module_base.config import main_config
 
 
-class WhitelistClass():
+class WhitelistClass:
     _minecraft_server: MinecraftServer
 
     def __init__(self, server: MinecraftServer) -> None:

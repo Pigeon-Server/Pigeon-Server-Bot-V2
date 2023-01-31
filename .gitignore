@@ -172,3 +172,6 @@ dmypy.json
 /.idea/copyright/Half_nothing.xml
 /main.exe
 /config/config.7z
+/FAQ.json5
+/list.txt
+/venv.7z

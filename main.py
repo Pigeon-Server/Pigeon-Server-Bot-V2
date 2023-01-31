@@ -1,13 +1,9 @@
-from json5 import load
 from module.module_base.config import main_config, module_config
 from module.module_base.logger import logger
 
 if main_config.config_version not in ["0.1.2"]:
     logger.error("配置文件版本与当前程序所支持的版本不匹配！请检查")
     exit()
-
-if module_config.debug_mode:
-    logger.warning("当前已开启Debug模式，可能会导致输出大量debug信息")
 
 from module.module_object.base import *
 from module.module_object.permission import *
@@ -24,7 +20,7 @@ if module_config.websocket_report:
     from module.module_object.websocket import *
 
 # 是否启用图片审查（未完成）
-if module_config.image_review:
+if module_config.cos_client:
     from module.module_object.image import *
 
 # 是否启用问答模块

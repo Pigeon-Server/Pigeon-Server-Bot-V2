@@ -16,7 +16,11 @@ def check_server_status_spy(event: GroupMessage):
 @control.on(check_server_status_spy)
 async def check_server(event: GroupMessage, execute: bool):
     if execute:
-        await message.send_message(event.group.id, await server.get_online_player(), group_name=event.group.name)
+        cmd = str(event.message_chain)[1:].rsplit(" ")
+        if len(cmd) == 1:
+            await message.send_message(event.group.id, await server.get_online_player(), group_name=event.group.name)
+        elif cmd[1] == 'full':
+            await message.send_message(event.group.id, await server.get_online_player(True), group_name=event.group.name)
 
 
 if module_config.tps:
@@ -34,5 +38,4 @@ if module_config.tps:
     async def tps(event: GroupMessage, execute: bool):
         if execute:
             command = str(event.message_chain)[1:].rsplit(" ")
-            temp = (await MCSM.run_command(command[1], "Server1", "forge tps")).rsplit("\n")
-            await message.send_message(event.group.id, temp[len(temp) - 1], group_name=event.group.name)
+            await message.send_message(event.group.id, (await MCSM.run_command(command[1], "Server1", "forge tps")).rsplit("\n")[-1], group_name=event.group.name)

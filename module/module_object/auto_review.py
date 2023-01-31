@@ -160,7 +160,7 @@ async def review_join(event: MemberJoinRequestEvent):
                 await send_info("该群所有人都能进入，已自动同意")
             else:
                 # QQ等级判断
-                if GAAConfig.audit_config.pass_config.pass_min_level != 0 and member_info.level < GAAConfig.audit_config.pass_config.pass_min_level:
+                if member_info.level < GAAConfig.audit_config.pass_config.pass_min_level:
                     Refuse = {
                         "error_code": 0,
                         "error_msg": "QQ等级未满足要求",
@@ -169,7 +169,7 @@ async def review_join(event: MemberJoinRequestEvent):
                     await final_step()
                     return
                 # 年龄判断
-                if GAAConfig.audit_config.pass_config.pass_min_age != 0 and member_info.age < GAAConfig.audit_config.pass_config.pass_min_age:
+                if member_info.age < GAAConfig.audit_config.pass_config.pass_min_age:
                     Refuse = {
                         "error_code": 1,
                         "error_msg": "年龄未满足要求",

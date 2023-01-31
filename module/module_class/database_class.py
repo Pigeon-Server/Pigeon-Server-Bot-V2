@@ -1,6 +1,7 @@
 import pymysql
 from module.module_base.logger import logger
 
+
 class DataBase:
 
     """数据库类"""
