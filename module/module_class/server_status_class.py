@@ -17,7 +17,7 @@ class ServerStatus:
         else:
             self._server = server_list
 
-    async def _check_server(self) -> None:
+    async def _check_server(self, full: bool = False) -> None:
         self._output_message = "[服务器状态]\n在线人数: {online}/{max}\n在线玩家列表: \n"
         self._player_max = 0
         self._player_online = 0
@@ -32,8 +32,13 @@ class ServerStatus:
                 if server_status.players.sample is None or len(server_status.players.sample) == 0:
                     output_message += ""
                 else:
+                    count = 0
                     for player in server_status.players.sample:
+                        count += 1
                         output_message += f"[{player.name}] "
+                        if count == 10 and not full:
+                            output_message += " ... "
+                            break
                 output_message += "\n"
                 self._output_message += output_message
                 del server_status, output_message
@@ -43,6 +48,6 @@ class ServerStatus:
                 self._output_message += server_name + "(0): 服务器连接失败\n"
             del server_name
 
-    async def get_online_player(self) -> str:
-        await self._check_server()
+    async def get_online_player(self, full: bool = False) -> str:
+        await self._check_server(full)
         return self._output_message.format(online=self._player_online, max=self._player_max).removesuffix("\n")

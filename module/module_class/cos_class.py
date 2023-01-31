@@ -4,7 +4,9 @@ from qcloud_cos.cos_exception import CosClientError, CosServiceError
 from module.module_class.exception_class import IncomingParametersError, NoKeyError
 from os.path import exists
 from typing import Optional, List, Union
-from module.module_base.config import image_list
+from module.module_base.config import module_config
+if module_config.image_review:
+    from module.module_base.config import image_list
 
 
 class CosClass:  # Cos属于付费接口，尽量少调用
@@ -116,11 +118,12 @@ class CosClass:  # Cos属于付费接口，尽量少调用
                 else:
                     logger.info(f"{file}已在Cos存在")
                 success_list.append(file_name)
-                if "Wait" in image_list.stored_data.keys():
-                    image_list.stored_data["Wait"].append(file.split('\\')[-1])
-                else:
-                    image_list.stored_data["Wait"] = [file.split('\\')[-1]]
-                image_list.write_data()
+                if module_config.image_review:
+                    if "Wait" in image_list.stored_data.keys():
+                        image_list.stored_data["Wait"].append(file.split('\\')[-1])
+                    else:
+                        image_list.stored_data["Wait"] = [file.split('\\')[-1]]
+                    image_list.write_data()
             else:
                 logger.error("文件不存在：" + file)
         return success_list
@@ -218,13 +221,13 @@ class CosClass:  # Cos属于付费接口，尽量少调用
                         logger.error(f"图片审核失败,图片名:{file_name}")
                     if item["Result"] == '1' or (item["Result"] == '2' and int(item["Score"]) >= 60):
                         logger.debug(f"图片违规，图片名:{file_name}")
-                        if "Wait" in image_list.stored_data.keys():
+                        if "NoPass" in image_list.stored_data.keys():
                             image_list.stored_data["NoPass"].append(file_name)
                         else:
                             image_list.stored_data["NoPass"] = [file_name]
                         image_list.write_data()
                         return "违规图片" if callback is None else await callback("违规图片")
-                    if "Wait" in image_list.stored_data.keys():
+                    if "Pass" in image_list.stored_data.keys():
                         image_list.stored_data["Pass"].append(file_name)
                     else:
                         image_list.stored_data["Pass"] = [file_name]

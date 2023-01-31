@@ -182,7 +182,7 @@ def judge_token(id_: int) -> dict:
         }
 
 
-async def download_file(urls: list, path: str, recall, callback=None) -> Optional[list]:
+async def download_file(urls: list, path: str, recall=None, callback=None) -> Optional[list]:
 
     """
     从url下载文件\n
@@ -207,12 +207,13 @@ async def download_file(urls: list, path: str, recall, callback=None) -> Optiona
                 file_name = join(path, f"{file_md5}.{file_type.extension}")
             else:
                 file_name = join(path, file_md5)
-            if f"{file_md5}.{file_type.extension}" in image_list.stored_data["NoPass"]:
-                logger.debug(f"{file_name}已记录为违规图片，撤回")
-                return await recall("违规图片")
-            if f"{file_md5}.{file_type.extension}" in image_list.stored_data["Pass"]:
-                logger.debug(f"{file_name}已判断通过,不保存")
-                continue
+            if module_config.image_review:
+                if "NoPass" in image_list.stored_data.keys() and f"{file_md5}.{file_type.extension}" in image_list.stored_data["NoPass"]:
+                    logger.debug(f"{file_name}已记录为违规图片，撤回")
+                    return await recall("违规图片")
+                if "Pass" in image_list.stored_data.keys() and f"{file_md5}.{file_type.extension}" in image_list.stored_data["Pass"]:
+                    logger.debug(f"{file_name}已判断通过,不保存")
+                    continue
             if not exists(file_name):
                 try:
                     open(file_name, "wb").write(fileio.content)

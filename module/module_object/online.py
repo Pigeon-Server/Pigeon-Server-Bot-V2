@@ -16,7 +16,11 @@ def check_server_status_spy(event: GroupMessage):
 @control.on(check_server_status_spy)
 async def check_server(event: GroupMessage, execute: bool):
     if execute:
-        await message.send_message(event.group.id, await server.get_online_player(), group_name=event.group.name)
+        cmd = str(event.message_chain)[1:].rsplit(" ")
+        if len(cmd) == 1:
+            await message.send_message(event.group.id, await server.get_online_player(), group_name=event.group.name)
+        elif cmd[1] == 'full':
+            await message.send_message(event.group.id, await server.get_online_player(True), group_name=event.group.name)
 
 
 if module_config.tps:

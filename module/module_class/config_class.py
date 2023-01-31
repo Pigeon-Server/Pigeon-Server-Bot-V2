@@ -1,12 +1,13 @@
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional, Union
 from json5.lib import load
 from module.module_base.logger import logger
 
 
 class ConfigTools:
+
     @staticmethod
-    def load_config(filename: str, obj_target: Optional[object] = None) -> Union[dict, list, object]:
+    def load_config(filename: str, obj_target: Optional[object] = None) -> Union[dict, list, object, None]:
         """
         加载config\n
         Args:
@@ -17,6 +18,7 @@ class ConfigTools:
         """
         if not Path("config/" + filename).is_file():
             logger.error(f"{filename}配置文件不存在，请按照{filename}.example创建并更名为{filename}")
+            return None
         else:
             try:
                 return load(open(f"config/{filename}", "r", encoding="UTF-8",
@@ -120,6 +122,11 @@ class GroupUnit:
     keyword_config: KeyWordConfig
 
 
+class Timer:
+    timer_type: str
+    timer_time: str
+
+
 class ConfigInit:
     config_version: str
     info_limit: int
@@ -133,6 +140,7 @@ class ConfigInit:
     mcsm_config: MCSMConfig
     permission: Permission
     automatic_config: dict[GroupUnit]
+    timer: Timer
 
     def __init__(self, json):
         self.__dict__ = json
@@ -191,6 +199,10 @@ class ModuleConfigInit:
     mcsm_module: bool
     check_mc_update: bool
     tps: bool
+    download_images: bool
+    packing_images: bool
+    upload_images: bool
+    cos_client: bool
 
     def __init__(self, json):
         self.__dict__ = json

@@ -10,7 +10,7 @@ from module.module_base.permission import per
 def answer_judge(event: GroupMessage):
     if not per.check_player_permission(event.sender.id, per.Question.GetAnswer):
         return None
-    if module_config.shutup:  # 如果排除列表启用，则排除
+    if not str(event.message_chain).startswith("Q") and module_config.shutup:  # 如果排除列表启用，则排除
         if event.sender.id in except_list.stored_data:
             return None
     if str(event.message_chain).startswith('/') or str(event.message_chain).startswith("!"):  # 去除/
