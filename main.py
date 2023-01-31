@@ -2,7 +2,7 @@ from json5 import load
 from module.module_base.config import main_config, module_config
 from module.module_base.logger import logger
 
-if main_config.config_version not in ["0.1.1"]:
+if main_config.config_version not in ["0.1.2"]:
     logger.error("配置文件版本与当前程序所支持的版本不匹配！请检查")
     exit()
 
