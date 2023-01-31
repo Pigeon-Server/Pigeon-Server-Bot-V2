@@ -155,10 +155,8 @@ dmypy.json
 /Test.json5
 /test.pyi
 /test.*
-/config/permission.json5
-/data/MCSM.json
-/data/permission.json
-/data/permissionGroup.json
+/config/*.json5
+/data
 /.idea
 /1.json5
 /change.json
