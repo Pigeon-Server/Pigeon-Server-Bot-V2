@@ -169,7 +169,7 @@ async def review_join(event: MemberJoinRequestEvent):
                     await final_step()
                     return
                 # 年龄判断
-                if member_info.age < GAAConfig.audit_config.pass_config.pass_min_age:
+                if member_info.age < GAAConfig.audit_config.pass_config.pass_min_age and member_info.age != 0:
                     Refuse = {
                         "error_code": 1,
                         "error_msg": "年龄未满足要求",
